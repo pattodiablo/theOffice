@@ -192,3 +192,13 @@ body:not(.game) #floorsBtn,body:not(.game) #crystals{display:none!important}
 @keyframes fragToast{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}
   20%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%) scale(1)}}
 @media(prefers-reduced-motion:reduce){#fragToast.show{animation:none;opacity:1;transform:translate(-50%,-50%)}}
+/* aviso del rack: cámaras apagadas (rojo, como su luz) o de vuelta (amarillo) */
+#camToast{position:fixed;left:50%;top:30%;z-index:6;transform:translate(-50%,-50%) scale(.8);opacity:0;pointer-events:none;white-space:nowrap;
+  font:700 clamp(18px,3.6vw,30px) "Chakra Petch",sans-serif;letter-spacing:.08em;color:#ffe3e3;text-shadow:0 0 14px #ff2a2a,0 2px 3px #000;
+  background:rgba(30,6,6,.75);border:1px solid #ff4d4d;border-radius:12px;padding:10px 20px;box-shadow:0 0 24px rgba(255,42,42,.4)}
+#camToast i{font-style:normal;color:#ff4d4d;margin-right:.2em}
+#camToast small{display:block;text-align:center;font-size:.5em;opacity:.85;letter-spacing:.12em;margin-top:2px}
+#camToast.on{color:#fff6d6;text-shadow:0 0 14px #ffcc00,0 2px 3px #000;background:rgba(30,24,4,.75);border-color:#ffcc00;box-shadow:0 0 24px rgba(255,204,0,.4)}
+#camToast.on i{color:#ffcc00}
+#camToast.show{animation:fragToast 2.6s ease-out forwards}
+@media(prefers-reduced-motion:reduce){#camToast.show{animation:none;opacity:1;transform:translate(-50%,-50%)}}

@@ -13,10 +13,17 @@ import { rebootCams } from './SecurityCam.js';
 // RACK.offTime = 0: quedan apagadas hasta el siguiente intento · > 0: se reinician solas después de esos segundos.
 // Luz de arriba: azul disponible · amarilla hackeando · roja cámaras apagadas. La barra muestra el avance (o el apagón restante).
 const COL = { ready: 0x4db8ff, hack: 0xffcc00, off: 0xff2a2a };
-let group, ringGeo, racks = [];
+let group, ringGeo, racks = [], toast, toastT;
 const v = new THREE.Vector3();
 
-export function initRacks(scene) { group = new THREE.Group(); scene.add(group); ringGeo = new THREE.RingGeometry(RACK.reach - .8, RACK.reach, 40).rotateX(-Math.PI / 2); }
+export function initRacks(scene) {
+  group = new THREE.Group(); scene.add(group); ringGeo = new THREE.RingGeometry(RACK.reach - .8, RACK.reach, 40).rotateX(-Math.PI / 2);
+  toast = document.createElement('div'); toast.id = 'camToast'; document.body.append(toast);   // aviso: cámaras apagadas / de vuelta
+}
+function showToast(html, kind) {
+  toast.innerHTML = html; toast.className = kind; void toast.offsetWidth; toast.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('show'), 2600);
+}
 
 // un rack por cada prop "rack" del nivel (se rehace con el nivel)
 export function syncRacks() {
@@ -32,12 +39,12 @@ export function syncRacks() {
   }
 }
 
-export function resetRacks() { G.camsOff = false; G.camsOffT = 0; for (const r of racks) r.prog = 0; }
+export function resetRacks() { G.camsOff = false; G.camsOffT = 0; for (const r of racks) r.prog = 0; toast && toast.classList.remove('show'); }
 
 // lógica (solo jugando)
 export function updateRacks(dt, p) {
   if (G.camsOff) {                                     // apagón temporal: cuenta atrás y se reinician
-    if (RACK.offTime > 0 && (G.camsOffT -= dt) <= 0) { G.camsOff = false; rebootCams(); bootSound(); }
+    if (RACK.offTime > 0 && (G.camsOffT -= dt) <= 0) { G.camsOff = false; rebootCams(); bootSound(); showToast('<i>●</i> CAMERAS BACK ONLINE', 'on'); }
     return;
   }
   for (const r of racks) {
@@ -48,6 +55,7 @@ export function updateRacks(dt, p) {
       if (r.prog >= 1) {                               // ¡listo! se apagan las cámaras
         G.camsOff = true; G.camsOffT = RACK.offTime; r.prog = 0; powerDownSound(); puff(r.x, r.y);
         for (const o of racks) o.prog = 0;
+        showToast(`<i>⏻</i> CAMERAS OFFLINE <small>${RACK.offTime > 0 ? `for ${RACK.offTime}s` : 'security cameras disabled'}</small>`, 'off');
         return;
       }
     } else r.prog = Math.max(0, r.prog - dt * 2);       // te alejaste: se pierde el avance
