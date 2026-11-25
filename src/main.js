@@ -15,6 +15,7 @@ import { initCams, animateCams } from './Prefabs/SecurityCam.js';
 import { initRacks, animateRacks } from './Prefabs/ServerRack.js';
 import { initLasers, animateLasers } from './Prefabs/LaserGate.js';
 import { initTowers, animateTowers } from './Prefabs/SensorTower.js';
+import { initSafes, animateSafes } from './Prefabs/Safe.js';
 import { initCrystal, animateCrystal } from './Prefabs/Crystal.js';
 import { initPortal, animatePortal } from './Prefabs/Portal.js';
 import { initFloorSelect, openFloors, goToLevel } from './UI/FloorSelect.js';
@@ -70,7 +71,7 @@ async function main() {
 
   initCodeRain(); initScreenFX(); initEngine();
   initWorldMesh(scene); initParticles(scene); initStartDesk(scene); initPlayer(scene);
-  initAgents(scene); initCams(scene); initRacks(scene); initLasers(scene); initTowers(scene); initCrystal(scene);
+  initAgents(scene); initCams(scene); initRacks(scene); initLasers(scene); initTowers(scene); initSafes(scene); initCrystal(scene);
   initPortal(scene, { restart: () => goToLevel(pre + '1') }); initBullets(scene); initHideSpots(scene); initExitDoor(scene);
   initInput(); initGameScene(); initCaught(); initFloorSelect(); if (EDITOR) initEditor();
   document.getElementById('floorsBtn').addEventListener('click', openFloors);
@@ -89,7 +90,7 @@ function frame(dt) {
   animatePlayer();
   updateStartDesk(); updateBubble(cam, stage); updateExitDoor(dt); updateCodeRain(dt);
   updateParticles(dt); animateHideSpots(dt, player);
-  animateAgents(); animateCams(); animateRacks(); animateLasers(); animateTowers(dt); animateCrystal(); animatePortal(dt);
+  animateAgents(); animateCams(); animateRacks(); animateLasers(); animateTowers(dt); animateSafes(dt); animateCrystal(); animatePortal(dt);
   const cEl = document.getElementById('crystals'); cEl.textContent = `◆ ${crystalCount() + (G.gotCrystal && !G.hadCrystal ? 1 : 0)}`; cEl.classList.toggle('got', !!G.gotCrystal);
   updateElevator(dt); updateCaught(dt);
   updateCamera(dt, player); updateSeeThrough(dt, player);

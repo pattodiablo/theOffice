@@ -80,7 +80,16 @@ export const TOWER = {
   baseLayers: 2,              // si tower.vox es un solo modelo: capas de abajo que son la base (lo de arriba se levanta)
 };
 // Cristales (fragmentos de realidad, uno por piso) y el portal del final
-export const CRYSTAL = { pickR: 3.5 };                     // qué tan cerca hay que pasar para recogerlo
+export const CRYSTAL = { pickR: 3.5 };
+// Caja fuerte (prop "safe"): si el nivel tiene una, el cristal está ADENTRO (se ignora el cristal suelto).
+// Hay que quedarse pegado a ella (dentro del círculo) crackTime segundos; si te alejas se pierde el avance.
+export const SAFE = {
+  reach: 11,                  // radio del círculo alrededor de la caja (vóxeles, desde su centro)
+  crackTime: 2.5,             // segundos pegado a la caja para abrirla
+  openAngle: 1.9,             // cuánto gira la puerta al abrirse (radianes; 1.57 = 90°)
+  popTime: .7,                // segundos que tarda el cristal en salir volando de la caja
+  popDist: 7,                 // dónde cae el cristal: vóxeles delante de la puerta
+};                     // qué tan cerca hay que pasar para recogerlo
 export const PORTAL = { need: 20, enterR: 5 };             // cristales para abrir el portal · radio para entrar
 export const ENDING_MESSAGES = [
   'You found every piece of reality. Welcome to the real world.',

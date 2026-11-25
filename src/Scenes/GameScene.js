@@ -8,6 +8,7 @@ import { resetCams, updateCamsAI } from '../Prefabs/SecurityCam.js';
 import { resetRacks, updateRacks } from '../Prefabs/ServerRack.js';
 import { resetLasers, updateLasers } from '../Prefabs/LaserGate.js';
 import { resetTowers, updateTowers } from '../Prefabs/SensorTower.js';
+import { resetSafes, updateSafes } from '../Prefabs/Safe.js';
 import { resetCrystal, updateCrystal } from '../Prefabs/Crystal.js';
 import { updatePortal } from '../Prefabs/Portal.js';
 import { updateBullets, clearBullets } from '../Prefabs/Bullet.js';
@@ -26,7 +27,7 @@ import { startCaught, resetCaught } from './CaughtScene.js';
 export function setMode(m) {
   G.mode = m; resize(); G.snapCam = true; document.body.classList.toggle('play', m !== 'edit'); hideScreen(); resetExit(); resetCaught(); clearBullets();
   if (EDITOR) onModeChange(m);
-  resetAgents(); resetCams(); resetRacks(); resetLasers(); resetTowers(); resetCrystal(); Object.assign(player, { x: G.seat.x, y: G.seat.y, ang: Math.PI / 2, vx: 0, vy: 0 });
+  resetAgents(); resetCams(); resetRacks(); resetLasers(); resetTowers(); resetSafes(); resetCrystal(); Object.assign(player, { x: G.seat.x, y: G.seat.y, ang: Math.PI / 2, vx: 0, vy: 0 });
   if (G.entOk && m === 'play') { const [x, y] = G.ENT.point(5.5, .5); Object.assign(player, { x, y, ang: G.ENT.ang }); } // con entrada: espera detrás de las puertas
   resetIntro(m === 'play');
   Object.assign(G, { time: 0, frozen: 0, cool: 0, maxSeen: 0, alerts: 0, doorOpen: 0, doorWant: false, elev: 'idle', elevT: 0, usedGlitch: false, hiddenKind: null, hideT: 0, popT: 1 }); resetHideSpots();
@@ -46,7 +47,7 @@ export function updateGame(dt) {
   G.time += dt; G.frozen = Math.max(0, G.frozen - dt); G.cool = Math.max(0, G.cool - dt);
   movePlayer(dt);
   updateCamouflage(player, dt);
-  updateRacks(dt, player);
+  updateRacks(dt, player); updateSafes(dt, player);
   updateElevatorCall(dt, player);
   checkExitProximity(player);
   const ag = updateAgentsAI(dt, player), cm = updateCamsAI(dt, player), caughtBy = ag.caughtBy;

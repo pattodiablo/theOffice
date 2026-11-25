@@ -141,6 +141,7 @@ src/
     LaserGate.js            láseres intermitentes de pared a pared: tocarlos prendidos mata
     SensorTower.js          torre sensor (prop "tower", partes base/torre): se levanta y dispara láseres en cruz
     Crystal.js              cristal (fragmento de realidad) de cada piso
+    Safe.js                 caja fuerte (prop "safe", partes base/puerta): quedarse pegado la abre y suelta el cristal
     Portal.js               portal del final: se abre con todos los cristales
   Animations/
     Clips.js                carga, interpola y mezcla los clips JSON

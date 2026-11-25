@@ -7,6 +7,7 @@ import { syncCams } from '../Prefabs/SecurityCam.js';
 import { syncRacks } from '../Prefabs/ServerRack.js';
 import { syncLasers } from '../Prefabs/LaserGate.js';
 import { syncTowers } from '../Prefabs/SensorTower.js';
+import { syncSafes } from '../Prefabs/Safe.js';
 import { syncCrystal } from '../Prefabs/Crystal.js';
 import { syncPortal } from '../Prefabs/Portal.js';
 import { drawHides } from '../Prefabs/HideSpot.js';
@@ -17,7 +18,7 @@ import { onLevelRebuilt } from './EditorScene.js';
 // Arma en el mundo el nivel abierto (G.level), como abrir una escena en Unity.
 // Se llama al cargar y cada vez que el editor cambia algo.
 export function rebuild() {
-  compose(); computeWalk(); syncAgents(); resetAgents(); syncCams(); syncRacks(); syncLasers(); syncTowers(); syncCrystal(); syncPortal(); drawHides();
+  compose(); computeWalk(); syncAgents(); resetAgents(); syncCams(); syncRacks(); syncLasers(); syncTowers(); syncSafes(); syncCrystal(); syncPortal(); drawHides();
   Object.assign(player, { x: G.seat.x, y: G.seat.y });
   if (EDITOR) { onLevelRebuilt(); saveDraft(G.level); }
 }

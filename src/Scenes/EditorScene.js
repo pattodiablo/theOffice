@@ -57,7 +57,7 @@ function drawRoutes() {
 function refreshStatus() {
   const ok = exitReachable(), L = G.level;
   $('#status').innerHTML = `Camino al EXIT: <b class="${ok ? '' : 'bad'}">${!G.exitOk ? 'falta la salida' : ok ? 'libre' : 'bloqueado'}</b>` +
-    ` · ${L.crystal ? '◆ cristal' : '<b class="bad">sin cristal</b>'}${L.portal ? ' · portal' : ''}` +
+    ` · ${L.props.some(p => p.t === 'safe') ? '◆ cristal en la caja fuerte' : L.crystal ? '◆ cristal' : '<b class="bad">sin cristal</b>'}${L.portal ? ' · portal' : ''}` +
     (L.entrance ? ` · inicio: <b class="${G.entOk ? '' : 'bad'}">${G.entOk ? 'entrada' : 'entrada inválida'}</b>` : '') +
     (badRoutes.length ? ` · <b class="bad">ruta ${badRoutes.join(', ')} choca</b>` : '') + ` · ${TW} × ${TD} baldosas · ${L.props.length} props · ${L.agents.filter(a => a.length).length} agentes · ${(L.cams || []).length} cámaras · ${(L.lasers || []).length} láseres · ${(L.hides || []).length} escondites`;
 }
@@ -87,7 +87,7 @@ const TABS = { level: 'Nivel', props: 'Props', agents: 'Agentes', cams: 'Segurid
 const TAB_OF = { floorAdd: 'level', floorOpen: 'level', floorDel: 'level', exit: 'level', callBtn: 'level', crystal: 'level', portal: 'level', entrance: 'level', player: 'level', place: 'props', route: 'agents', hide: 'hides', cam: 'cams', laser: 'cams', erase: 'erase' };
 const TAB_TOOL = { level: 'floorAdd', props: 'place', agents: 'route', hides: 'hide', cams: 'cam', erase: 'erase' }; // herramienta al abrir la pestaña
 // grupos del selector de props (los que no estén aquí aparecen en "Otros")
-const PROP_GROUPS = { Muebles: ['desk', 'cabinet', 'micro', 'copier', 'cooler'], 'Decoración': ['plant', 'plant_s', 'trash'], Paredes: ['panel', 'muro'], Seguridad: ['rack', 'tower'] };
+const PROP_GROUPS = { Muebles: ['desk', 'cabinet', 'micro', 'copier', 'cooler'], 'Decoración': ['plant', 'plant_s', 'trash'], Paredes: ['panel', 'muro'], Seguridad: ['rack', 'tower', 'safe'] };
 
 function propSelect() {
   const used = new Set(Object.values(PROP_GROUPS).flat());

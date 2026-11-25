@@ -170,3 +170,17 @@ export const tickSound = () => tone((a, t0) => {
   g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.05, t0 + .004); g.gain.exponentialRampToValueAtTime(.0001, t0 + .05);
   o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .06);
 });
+// caja fuerte: "clic" del dial mientras la abres (k = avance 0..1) y "clonk" + chirrido al abrirse
+export const dialClick = k => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'square'; o.frequency.value = 2200 + k * 900;
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.035, t0 + .002); g.gain.exponentialRampToValueAtTime(.0001, t0 + .03);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .04);
+});
+export const safeOpenSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(160, t0); o.frequency.exponentialRampToValueAtTime(60, t0 + .18);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.3, t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + .25);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .3);
+  const c = a.createOscillator(), h = a.createGain(); c.type = 'sawtooth'; c.frequency.setValueAtTime(420, t0 + .12); c.frequency.linearRampToValueAtTime(300, t0 + .7);
+  h.gain.setValueAtTime(.0001, t0 + .12); h.gain.exponentialRampToValueAtTime(.03, t0 + .2); h.gain.exponentialRampToValueAtTime(.0001, t0 + .75);
+  c.connect(h).connect(a.destination); c.start(t0 + .12); c.stop(t0 + .8);
+});

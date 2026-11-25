@@ -7,7 +7,7 @@ export const PROPS = {};
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
 // partes que el juego anima por su cuenta (no se pegan al escenario): p. ej. la "torre" de tower.vox
-export const MOVING_PARTS = ['torre'];
+export const MOVING_PARTS = ['torre', 'puerta'];   // torre de tower.vox · puerta de safe.vox
 export function initProps(data) {
   for (const [k, p] of Object.entries(data.props)) {
     const b = b64(p.v), pv = p.pv ? b64(p.pv) : null, vox = [];

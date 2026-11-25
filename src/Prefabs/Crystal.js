@@ -6,11 +6,13 @@ import { hasCrystal } from '../Data/Progress.js';
 import { crystalSound } from '../Core/Audio.js';
 import { puff } from '../FX/Particles.js';
 import { player } from './Player.js';
+import { safeCrystalPos } from './Safe.js';
 
 // Cristal: un "fragmento de realidad" por nivel (level.crystal = { x, y }, se pone en el editor › Nivel › Cristal).
 // Flota y gira; al tocarlo se recoge. Cuenta para el progreso cuando terminas el piso con él.
 // Si ya lo tenías de antes, se ve transparente (puedes volver a tomarlo, pero no suma otro).
 // Es celeste a propósito: el color del mundo real, frente al verde de la Matrix.
+// Si el nivel tiene una caja fuerte, el cristal está adentro: aparece cuando la abres (ver Safe.js).
 let group, gem, core, edges, shell, glow, sparks = [], beam, light, ring, ring2, pad, toast, toastT;
 // Al recogerlo: vuela a la cabeza del jugador, flota ahí unos segundos y baja encogiéndose hasta meterse en él.
 const PICK = { fly: .35, hover: 1.6, sink: .55, headY: 22.5, bodyY: 9 };   // segundos de cada fase · alturas sobre el piso
@@ -72,15 +74,21 @@ function showToast(text) {
   clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('show'), 2300);
 }
 
-export function syncCrystal() { group.visible = !!G.level.crystal; resetCrystal(); }
+// dónde está el cristal ahora: { x, y, hop (altura extra), ready (se puede recoger) } o null si no hay / sigue en la caja
+function where() {
+  if (G.safeCrystal) return safeCrystalPos();
+  const c = G.level.crystal; return c ? { x: c.x, y: c.y, hop: 0, ready: true } : null;
+}
+
+export function syncCrystal() { group.visible = !!where(); resetCrystal(); }
 export function resetCrystal() { G.gotCrystal = false; G.hadCrystal = !EDITOR && hasCrystal(G.levelName); pickT0 = -1; absorbed = false; }
 
 // lógica (jugando): recogerlo al tocarlo
 export function updateCrystal(dt, p) {
-  const c = G.level.crystal; if (!c || G.gotCrystal) return;
+  const c = where(); if (!c || !c.ready || G.gotCrystal) return;
   if (Math.hypot(p.x - c.x, p.y - c.y) < CRYSTAL.pickR) {
     G.gotCrystal = true; crystalSound(); puff(c.x, c.y);
-    pickT0 = G.t; absorbed = false; from = { x: c.x, y: c.y, z: Z + 8 + Math.sin(G.t * 2.4) * .9 };
+    pickT0 = G.t; absorbed = false; from = { x: c.x, y: c.y, z: Z + 8 + c.hop + Math.sin(G.t * 2.4) * .9 };
     showToast(G.hadCrystal ? 'REALITY FRAGMENT <small>(already yours)</small>' : 'REALITY FRAGMENT ACQUIRED');
   }
 }
@@ -104,13 +112,13 @@ function placeCrystal(x, y, z, k, spin, bright) {
 }
 
 export function animateCrystal() {
-  const c = G.level.crystal;
+  const c = where();
   if (c && pickT0 >= 0 && G.mode !== 'edit') return animatePickup();
   group.visible = !!c && !(G.gotCrystal && G.mode !== 'edit');
   if (!group.visible) return;
-  const y = Z + 8 + Math.sin(G.t * 2.4) * .9, faded = G.hadCrystal && G.mode !== 'edit', b = faded ? .3 : 1;
+  const y = Z + 8 + c.hop + Math.sin(G.t * 2.4) * .9, faded = G.hadCrystal && G.mode !== 'edit', b = faded ? .3 : 1;
   placeCrystal(c.x, c.y, y, 1, G.t * 1.6, b);
-  for (const m of [beam, ring, ring2, pad]) m.visible = true;
+  for (const m of [beam, ring, ring2, pad]) m.visible = c.ready;   // saliendo de la caja: solo la gema
   beam.position.set(c.x, Z, -c.y); beam.material.opacity = (.55 + .2 * Math.sin(G.t * 2)) * (faded ? .25 : 1); beam.rotation.y = G.t * .5;
   ring.position.set(c.x, Z + .3, -c.y); ring.scale.setScalar(1 + .1 * Math.sin(G.t * 3)); ring.material.opacity = .8 * b;
   const w = (G.t * .7) % 1;                                              // onda que se expande desde el pie
