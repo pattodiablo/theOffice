@@ -77,6 +77,7 @@ export const TOWER = {
   fireTime: 1,                // segundos disparando
   restTime: 1.2,              // descanso entre disparos (si sigues en el radio vuelve a cargar)
   hitR: 1.3,                  // qué tan cerca del haz hay que pasar para tocarlo
+  baseLayers: 2,              // si tower.vox es un solo modelo: capas de abajo que son la base (lo de arriba se levanta)
 };
 // Cristales (fragmentos de realidad, uno por piso) y el portal del final
 export const CRYSTAL = { pickR: 3.5 };                     // qué tan cerca hay que pasar para recogerlo

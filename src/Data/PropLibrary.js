@@ -1,4 +1,5 @@
 import { listGeo } from '../Core/VoxelMesh.js';
+import { TOWER } from '../Settings.js';
 
 // Biblioteca de props (los "prefabs" de MagicaVoxel): se cargan de office.json,
 // que genera tools/exportar_datos.mjs (solo, con npm run dev) a partir de assets/vox/props/*.vox.
@@ -11,7 +12,11 @@ export function initProps(data) {
   for (const [k, p] of Object.entries(data.props)) {
     const b = b64(p.v), pv = p.pv ? b64(p.pv) : null, vox = [];
     for (let i = 0; i < b.length; i += 4) vox.push([b[i], b[i + 1], b[i + 2], b[i + 3], pv ? pv[i / 4] : 0]);  // [x, y, z, color, parte]
-    PROPS[k] = { n: p.n, w: p.w, d: p.d, vox, parts: p.parts || null, rots: [] };
+    let parts = p.parts || null;
+    // torre sensor guardada como un solo modelo (p. ej. si MagicaVoxel la volvió a guardar entera): se separa por altura,
+    // las primeras TOWER.baseLayers capas son la base y lo de arriba es la torre que se levanta
+    if (k.startsWith('tower') && !(parts && parts.includes('torre'))) { parts = ['base', 'torre']; for (const v of vox) v[4] = v[2] >= TOWER.baseLayers ? 1 : 0; }
+    PROPS[k] = { n: p.n, w: p.w, d: p.d, vox, parts, rots: [] };
   }
 }
 

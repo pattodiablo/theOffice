@@ -10,7 +10,7 @@ import { puff } from '../FX/Particles.js';
 // Flota y gira; al tocarlo se recoge. Cuenta para el progreso cuando terminas el piso con él.
 // Si ya lo tenías de antes, se ve transparente (puedes volver a tomarlo, pero no suma otro).
 // Es celeste a propósito: el color del mundo real, frente al verde de la Matrix.
-let group, core, shell, light, ring;
+let group, core, shell, light, ring, toast, toastT;
 
 export function initCrystal(scene) {
   group = new THREE.Group(); scene.add(group);
@@ -20,6 +20,11 @@ export function initCrystal(scene) {
   light = new THREE.PointLight(0x7fdcff, 260, 30, 2);
   ring = new THREE.Mesh(new THREE.RingGeometry(2.2, 2.9, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x4fd2ff, transparent: true, opacity: .45, depthWrite: false }));
   ring.renderOrder = 2; group.add(core, shell, light, ring);
+  toast = document.createElement('div'); toast.id = 'fragToast'; document.body.append(toast);   // aviso al recogerlo
+}
+function showToast(text) {
+  toast.innerHTML = `<i>◆</i> ${text}`; toast.classList.remove('show'); void toast.offsetWidth; toast.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('show'), 2300);
 }
 
 export function syncCrystal() { group.visible = !!G.level.crystal; resetCrystal(); }
@@ -28,7 +33,10 @@ export function resetCrystal() { G.gotCrystal = false; G.hadCrystal = !EDITOR &&
 // lógica (jugando): recogerlo al tocarlo
 export function updateCrystal(dt, p) {
   const c = G.level.crystal; if (!c || G.gotCrystal) return;
-  if (Math.hypot(p.x - c.x, p.y - c.y) < CRYSTAL.pickR) { G.gotCrystal = true; crystalSound(); puff(c.x, c.y); }
+  if (Math.hypot(p.x - c.x, p.y - c.y) < CRYSTAL.pickR) {
+    G.gotCrystal = true; crystalSound(); puff(c.x, c.y);
+    showToast(G.hadCrystal ? 'REALITY FRAGMENT <small>(already yours)</small>' : 'REALITY FRAGMENT ACQUIRED');
+  }
 }
 
 // visual
