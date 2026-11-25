@@ -48,6 +48,29 @@ const laserGeo = new THREE.BoxGeometry(1, .35, .35).translate(.5, 0, 0);   // la
 function makeLaser() { // mira láser del agente rojo antes de disparar
   const l = new THREE.Mesh(laserGeo, new THREE.MeshBasicMaterial({ color: 0xff2a2a, transparent: true, depthWrite: false })); l.visible = false; l.renderOrder = 3; scene.add(l); return l;
 }
+// globo sobre la cabeza: "!" rojo (te vio / te persigue / viene a ayudar) · "?" amarillo (sospecha, te busca o tiene una corazonada)
+const markTex = {};
+function markTexture(sym) {
+  if (markTex[sym]) return markTex[sym];
+  const c = document.createElement('canvas'); c.width = 128; c.height = 144; const x = c.getContext('2d');
+  x.lineJoin = 'round'; x.lineWidth = 7; x.strokeStyle = '#0b0b0b'; x.fillStyle = '#fff';
+  const L = 12, R = 116, T = 8, B = 100, r = 24;                       // globo y colita en un solo contorno (sin uniones raras)
+  x.beginPath(); x.moveTo(L + r, T); x.lineTo(R - r, T); x.arcTo(R, T, R, T + r, r); x.lineTo(R, B - r); x.arcTo(R, B, R - r, B, r);
+  x.lineTo(78, B); x.lineTo(58, 134); x.lineTo(50, B);                  // colita hacia abajo
+  x.lineTo(L + r, B); x.arcTo(L, B, L, B - r, r); x.lineTo(L, T + r); x.arcTo(L, T, L + r, T, r); x.closePath();
+  x.fill(); x.stroke();
+  x.font = 'bold 60px Arial, Helvetica, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';   // Arial Bold, dentro del globo
+  x.lineWidth = 7; x.strokeText(sym, 64, 55); x.fillStyle = sym === '!' ? '#ff2a2a' : '#ffcc00'; x.fillText(sym, 64, 56);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return markTex[sym] = t;
+}
+function makeMark() {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: markTexture('!'), transparent: true, depthTest: false, depthWrite: false }));
+  s.renderOrder = 6; s.visible = false; scene.add(s); return s;
+}
+const markOf = a => a.state === 'alert' || a.state === 'chase' || a.state === 'assist' ? '!'
+  : a.state === 'search' || a.state === 'investigate' || (a.state === 'patrol' && a.meter > .15) ? '?' : null;
+let markLastT = 0;
+
 // dron vigía: el modelo de MagicaVoxel mira hacia -y (sus cañones apuntan ahí); se gira para que mire hacia +X como los agentes
 function makeDrone(P) {
   const root = new THREE.Group(), model = new THREE.Group(); root.add(model); model.rotation.y = Math.PI / 2; model.scale.setScalar(P.scale);
@@ -72,9 +95,9 @@ const tipPos = (a, k) => { const [f, s] = a.ch.tips[k], c = Math.cos(a.ang), si 
 function makeAgent(type) {
   const P = AGENT_TYPES[type];
   const ch = P.drone ? makeDrone(P) : makeCharacter(scene, true, type === 'red');
-  return { type, P, ch, fan: makeFan(), ring: makeRing(P.actionR), lasers: P.shoots ? (P.drone ? [makeLaser(), makeLaser()] : [makeLaser()]) : [] };
+  return { type, P, ch, fan: makeFan(), ring: makeRing(P.actionR), mark: makeMark(), markSym: null, markT: 0, markA: 0, lasers: P.shoots ? (P.drone ? [makeLaser(), makeLaser()] : [makeLaser()]) : [] };
 }
-function removeAgent(a) { scene.remove(a.ch.root, a.fan, a.ring, ...a.lasers); }
+function removeAgent(a) { scene.remove(a.ch.root, a.fan, a.ring, a.mark, ...a.lasers); }
 
 // crea, cambia o quita agentes para que coincidan con las rutas y tipos del nivel
 export function syncAgents() {
@@ -245,8 +268,9 @@ export function updateAgentsAI(dt, player) {
 
 // pose, saltito de alerta, brazo apuntando, láser, cono y anillo con el color del semáforo (visual, cada frame)
 export function animateAgents() {
+  const dt = Math.min(.1, Math.max(0, G.t - markLastT)); markLastT = G.t;
   for (const a of agents) {
-    if (!a.path.length) continue;
+    if (!a.path.length) { a.mark.visible = false; continue; }
     const P = a.P;
     if (a.ch.drone) {                                                    // vigía: flota, se mece y se inclina al avanzar
       const t = G.frozen > 0 ? 0 : G.t, i = agents.indexOf(a);
@@ -272,5 +296,21 @@ export function animateAgents() {
     const c = stateColor(a);
     a.fan.material.color.setHex(c); a.fan.material.opacity = G.frozen > 0 ? .22 : .32 + a.meter * .25;
     a.ring.position.set(a.x, Z + .35, -a.y); a.ring.material.color.setHex(c); a.ring.material.opacity = G.frozen > 0 ? .25 : .55;
+    animateMark(a, dt);
   }
+}
+
+// globo "!" / "?" sobre la cabeza: salta grande al aparecer, se acomoda, flota y se desvanece al calmarse
+function animateMark(a, dt) {
+  const play = G.mode === 'play' || G.mode === 'over' || G.mode === 'caught';
+  const sym = play && G.intro < 0 && G.asm < 0 ? markOf(a) : null;
+  if (sym && sym !== a.markSym) { a.markSym = sym; a.markT = 0; a.mark.material.map = markTexture(sym); a.mark.material.needsUpdate = true; }
+  a.markT += dt; a.markA = sym ? Math.min(1, a.markA + dt * 12) : Math.max(0, a.markA - dt * 3);
+  if (!sym && a.markA <= 0) a.markSym = null;
+  a.mark.visible = a.markA > 0; if (!a.mark.visible) return;
+  const t = a.markT, pop = t < .12 ? .3 + t / .12 : t < .26 ? 1.3 - (t - .12) / .14 * .3 : 1;     // ¡pop!
+  const wob = a.markSym === '!' && t < .5 ? Math.sin(t * 50) * .25 * (1 - t / .5) : 0;          // el "!" tiembla al aparecer
+  const base = a.ch.drone ? a.ch.root.position.y + 9 : a.ch.root.position.y + 29;
+  a.mark.position.set(a.x + wob, base + Math.sin(G.t * 4 + a.x) * .4, -a.y);
+  a.mark.scale.set(8 * pop, 8 * pop * 144 / 128, 1);   // la textura es más alta que ancha (por la colita) a.mark.material.opacity = a.markA;
 }
