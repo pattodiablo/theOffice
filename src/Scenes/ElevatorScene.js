@@ -3,7 +3,7 @@ import { EDITOR, $ } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
 import { WAKE_MESSAGES } from '../Settings.js';
 import { markDone } from '../Data/Progress.js';
-import { openFloors } from '../UI/FloorSelect.js';
+import { showDial, hideDial, fragmentsText } from '../UI/FloorSelect.js';
 import { renderer, stage, CAM_OFF } from '../Core/Engine.js';
 import { makeCharacter, box } from '../Prefabs/Character.js';
 import { poseClip } from '../Animations/CharacterPoses.js';
@@ -33,6 +33,7 @@ const SHAFT = 13;                      // medio ancho del hueco (las paredes est
 const Z0 = 3;                          // el personaje se para en y = 3 (como en el nivel)
 
 let elevScene, elevCam, cabin, rider, floorTex, segs = [], streaks = [];
+let shiftK = 0;                        // 0→1: corre la cabina a la derecha para dejarle lugar al dial
 let ex = -1, shown = false, fade = 0, travel = 0, speed = 0, floorShown = null, fromFloor = 1, levelCount = 1, loading = false;
 let rewardEl, msgEl, playBtn, msg = '', shownChars = -1, lastMsg = -1, done = false;
 
@@ -113,16 +114,19 @@ function buildElevator() {
 function buildUI() {
   const f = document.createElement('div'); f.id = 'fade'; document.body.append(f);
   rewardEl = document.createElement('div'); rewardEl.id = 'reward';
-  rewardEl.innerHTML = `<div class="top"><p class="rmsg"></p></div>
-    <div class="bottom"><div class="rbtns"><button id="nextBtn" class="playbtn">Play ▶</button>${EDITOR ? '<button id="rewardEdit">Volver al editor</button>' : '<button id="rewardFloors">☰ Floors</button>'}</div></div>`;
+  // juego: título (mensaje) + selector de pisos tipo dial · editor: Play / Volver al editor
+  rewardEl.innerHTML = EDITOR
+    ? `<div class="top"><p class="rmsg"></p></div>
+       <div class="bottom"><div class="rbtns"><button id="nextBtn" class="playbtn">Play ▶</button><button id="rewardEdit">Volver al editor</button></div></div>`
+    : `<div class="top"><p class="rmsg dtitle"></p><p class="rsub"></p></div><div class="mid"></div>`;
+  if (!EDITOR) rewardEl.classList.add('withdial');
   document.body.append(rewardEl); msgEl = rewardEl.querySelector('.rmsg');
-  playBtn = $('#nextBtn'); playBtn.addEventListener('click', playNext);
-  $('#rewardFloors')?.addEventListener('click', openFloors);
+  playBtn = $('#nextBtn'); playBtn?.addEventListener('click', () => playLevel(G.levelName));
   $('#rewardEdit')?.addEventListener('click', () => setMode('edit'));
   addEventListener('keydown', e => {
     if (G.mode !== 'exit' || !shown) return;
     if (!done && ex > T_MSG) { done = true; ex = T_MSG + msg.length * CHAR_TIME; }            // tecla: termina de escribir
-    else if (done && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); playNext(); }
+    else if (EDITOR && done && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); playLevel(G.levelName); }   // en el juego las teclas las maneja el dial
   });
 }
 
@@ -145,14 +149,16 @@ export function startExit() {
 // lo llama setMode: vuelve todo a la normalidad
 export function resetExit() {
   ex = -1; shown = false; document.body.classList.remove('exiting');
-  rewardEl?.classList.remove('show-msg', 'show-play', 'typing');
+  rewardEl?.classList.remove('show-msg', 'show-play', 'typing'); shiftK = 0;
+  if (rewardEl?.querySelector('.dial')) hideDial();
 }
 
-async function playNext() {
+// juega el piso elegido en el dial (en el editor se repite el mismo nivel, ya cargado)
+async function playLevel(name) {
   if (loading) return; loading = true;
   fade = 1; $('#fade').style.opacity = 1;
-  const next = nextLevelName(G.levelName), lvl = !EDITOR && next ? await loadLevelNamed(next) : null; // en el editor se repite el mismo nivel (ya precargado)
-  if (lvl) { G.level = lvl; G.levelName = next; try { history.replaceState(null, '', `?nivel=${next}`); } catch (e) {} rebuild(); prefetchLevel(nextLevelName(next)); }
+  const lvl = !EDITOR && name ? await loadLevelNamed(name) : null;
+  if (lvl) { G.level = lvl; G.levelName = name; try { history.replaceState(null, '', `?nivel=${name}`); } catch (e) {} rebuild(); prefetchLevel(nextLevelName(name)); }
   setMode('play');                       // el nivel se ensambla y la pantalla se aclara sola
 }
 
@@ -189,7 +195,9 @@ export function updateElevator(dt) {
       if (n !== shownChars) { shownChars = n; msgEl.textContent = msg.slice(0, n); }
       rewardEl.classList.toggle('typing', n < msg.length);
       if (n >= msg.length && ex >= T_MSG + msg.length * CHAR_TIME + .3 && !rewardEl.classList.contains('show-play')) {
-        done = true; rewardEl.classList.add('show-play'); playBtn.focus();
+        done = true; rewardEl.classList.add('show-play');
+        if (EDITOR) playBtn.focus();
+        else { rewardEl.querySelector('.rsub').textContent = fragmentsText(); showDial(rewardEl.querySelector('.mid'), nextLevelName(G.levelName) || G.levelName, playLevel); }
       }
     }
   }
@@ -202,7 +210,9 @@ export const elevatorShown = () => G.mode === 'exit' && shown;
 const target = new THREE.Vector3(0, 10, 0);
 export function renderElevator() {
   const a = stage.clientWidth / stage.clientHeight, half = Math.max(36, 23 / a);
-  Object.assign(elevCam, { left: -half * a, right: half * a, top: half, bottom: -half }); elevCam.updateProjectionMatrix();
+  shiftK += ((!EDITOR && rewardEl?.classList.contains('show-play') ? 1 : 0) - shiftK) * .08;
+  const sx = shiftK * half * a * (a < 1 ? .2 : .26);
+  Object.assign(elevCam, { left: -half * a - sx, right: half * a - sx, top: half, bottom: -half }); elevCam.updateProjectionMatrix();
   elevCam.position.copy(target).add(CAM_OFF); elevCam.lookAt(target);
   renderer.render(elevScene, elevCam);
 }

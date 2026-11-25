@@ -164,3 +164,9 @@ export const portalSound = () => tone((a, t0) => {
     g.gain.setValueAtTime(.0001, s0); g.gain.exponentialRampToValueAtTime(.06, s0 + .2); g.gain.exponentialRampToValueAtTime(.0001, s0 + 3);
     o.connect(g).connect(a.destination); o.start(s0); o.stop(s0 + 3.1); });
 });
+// "tic" del selector de pisos (cada piso que pasa)
+export const tickSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'triangle'; o.frequency.value = 1500;
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.05, t0 + .004); g.gain.exponentialRampToValueAtTime(.0001, t0 + .05);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .06);
+});

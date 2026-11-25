@@ -27,6 +27,9 @@ body.route .route-only{display:inline-flex}
 #hud button{pointer-events:auto}
 .chip{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:600 15px "Chakra Petch",sans-serif}
 #meterBox{width:min(200px,38vw)} #meterBox small{display:block;font:600 13px Inter;opacity:.8;margin-bottom:4px}
+#hud .row{flex-wrap:nowrap;flex-shrink:0}
+#info{font-variant-numeric:tabular-nums;width:5.4em;text-align:center;white-space:nowrap;box-sizing:border-box;padding-left:4px!important;padding-right:4px!important}   /* ancho fijo: no salta al cambiar los decimales */
+@media(max-width:520px){#hud .chip{padding:6px 9px;font-size:14px}#meterBox{width:auto;flex:0 1 110px;min-width:56px;padding:9px 8px!important;margin-top:8px}#meter{height:8px!important}}
 #meter{height:10px;border-radius:5px;background:rgba(255,255,255,.12);overflow:hidden}
 #meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd24d,var(--r))}
 #btns{position:fixed;right:16px;bottom:max(18px,env(safe-area-inset-bottom));z-index:2;gap:14px}
@@ -137,19 +140,40 @@ body.exiting .hidebar,body.caught .hidebar{display:none!important}
 body:not(.game) #floorsBtn,body:not(.game) #crystals{display:none!important}
 #portalNum{position:fixed;z-index:3;transform:translate(-50%,-50%);pointer-events:none;font:700 18px "Chakra Petch",sans-serif;color:#9fe8ff;
   background:rgba(4,14,20,.8);border:1px solid #4fd2ff;border-radius:8px;padding:4px 10px;text-shadow:0 0 8px #4fd2ff}
-#floors{z-index:20}
-#floors .card{max-width:520px;width:100%;text-align:center}
-#floors h2{letter-spacing:.15em;color:#3be07c;margin:0 0 4px}
-#floors .fsub{color:#9fe8ff;margin:0 0 14px}
-#floors .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;max-height:55vh;overflow:auto;padding:2px}
-#floors .fgrid button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:10px}
-#floors .fgrid button b{font:700 20px "Chakra Petch",sans-serif}
-#floors .fgrid button i{font-style:normal;color:#38505a}
-#floors .fgrid button i.got{color:#4fd2ff;text-shadow:0 0 8px #4fd2ff}
-#floors .fgrid button small{font-size:11px;opacity:.7;min-height:13px}
-#floors .fgrid button.done{border-color:#3be07c}
-#floors .fgrid button.cur{background:rgba(59,224,124,.18)}
-#floors .fgrid button:disabled{opacity:.35}
+/* selector de pisos tipo dial (ascensor del final y menú ☰) */
+.dtitle{font:400 clamp(26px,5.2vw,50px)/1.05 Anton,Bangers,"Chakra Petch",sans-serif;color:#3be07c;letter-spacing:.02em;text-shadow:0 0 18px rgba(59,224,124,.45),0 3px 0 #06140c;margin:0;text-wrap:balance}
+#reward .rmsg.dtitle{font:400 clamp(26px,5.2vw,50px)/1.05 Anton,Bangers,"Chakra Petch",sans-serif;max-width:900px}
+#reward.withdial{justify-content:flex-start;padding:max(4vh,16px) 0 max(2vh,8px)}
+#reward.withdial .top{flex-direction:column;align-items:center;padding:0 16px;min-height:0}
+#reward .rsub,#floors .fsub{margin:6px 0 0;color:#9fe8ff;font:600 14px "Chakra Petch",sans-serif;text-shadow:0 1px 2px #000}
+#reward .rsub{opacity:0;transition:opacity .4s}
+#reward.show-play .rsub{opacity:1}
+#reward .mid{flex:1;position:relative;width:100%;min-height:0}
+.dial{position:absolute;inset:0;pointer-events:auto;--row:64px;--col:clamp(84px,13vw,124px);--x:clamp(14px,6vw,90px);animation:dialIn .35s ease-out;user-select:none;-webkit-user-select:none}
+@keyframes dialIn{from{opacity:0;transform:translateX(-24px)}}
+.dial .dband{position:absolute;left:0;right:0;top:50%;height:var(--row);margin-top:calc(var(--row)*-.5);background:rgba(175,255,205,.8);box-shadow:0 0 26px rgba(59,224,124,.45);display:flex;align-items:center;padding-left:calc(var(--x) + var(--col) + 16px);pointer-events:none;transition:background .2s}
+.dial .dband.done{background:rgba(205,225,212,.8)}
+.dial .dband.locked{background:rgba(110,130,120,.7)}
+.dial .dplay{pointer-events:auto;min-height:calc(var(--row)*.74);padding:0 calc(var(--row)*.34);border-radius:12px;border:3px solid #06140c;background:#06140c;color:#3be07c;font:400 calc(var(--row)*.38)/1 Anton,Bangers,"Chakra Petch",sans-serif;letter-spacing:.05em;cursor:pointer;box-shadow:3px 3px 0 rgba(6,20,12,.35);white-space:nowrap}
+.dial .dplay:hover:not(:disabled){background:#0d2a19}
+.dial .dplay:disabled{background:#3a4a42;color:#9fb3a8;border-color:#3a4a42;cursor:default}
+.dial .dlist{position:absolute;left:var(--x);width:var(--col);top:calc(var(--row)*.85);bottom:calc(var(--row)*.85);touch-action:none;cursor:grab;-webkit-mask-image:linear-gradient(transparent,#000 18%,#000 82%,transparent);mask-image:linear-gradient(transparent,#000 18%,#000 82%,transparent)}
+.dial .dlist:active{cursor:grabbing}
+.dial .ditem{position:absolute;left:0;right:0;top:50%;height:calc(var(--row)*.8);margin-top:calc(var(--row)*-.4);display:flex;align-items:center;justify-content:center;gap:.3em;padding:0;border-radius:14px;border:3px solid #0b2a17;background:#3be07c;color:#06140c;box-shadow:0 3px 0 #0b2a17;font:400 calc(var(--row)*.44)/1 Anton,Bangers,"Chakra Petch",sans-serif;will-change:transform,opacity;cursor:inherit}
+.dial .ditem i{font-style:normal;font-size:1em;color:#fff;text-shadow:0 0 2px #06140c,0 1px 2px #06140c}
+.dial .ditem i.got{color:#4fd2ff;text-shadow:0 0 8px #4fd2ff,0 1px 2px #06140c}
+.dial .ditem.done{background:#9aa5a0;border-color:#2e3833;box-shadow:0 3px 0 #2e3833}
+.dial .ditem.locked{background:#22322a;border-color:#11201a;color:#6f8a7b;box-shadow:0 3px 0 #11201a}
+.dial .ditem.sel{background:transparent;border-color:#06140c;color:#06140c;box-shadow:none}
+.dial .darrow{position:absolute;left:var(--x);width:var(--col);height:calc(var(--row)*.8);padding:0;background:none;border:0;color:#3be07c;font-size:calc(var(--row)*.46);line-height:1;cursor:pointer;text-shadow:0 0 10px rgba(59,224,124,.6),0 2px 0 #06140c}
+.dial .darrow:active{transform:scale(.9)}
+.dial .dup{top:0}.dial .ddown{bottom:0}
+#floors{position:fixed;inset:0;z-index:20;background:rgba(4,10,7,.9);display:flex;flex-direction:column;padding:max(4vh,16px) 0 max(2vh,8px)}
+#floors[hidden]{display:none}
+#floors .ftop{text-align:center;padding:0 56px}
+#floors .dslot{flex:1;position:relative;min-height:0}
+#floorsClose{position:absolute;top:12px;right:12px;width:44px;height:44px;padding:0;border-radius:12px;font-size:20px}
+@media(prefers-reduced-motion:reduce){.dial{animation:none}}
 #ending{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:24px;text-align:center;
   background:#fff;color:#0d1a22;animation:endIn 1.6s ease-out}
 #ending.show{display:flex}
