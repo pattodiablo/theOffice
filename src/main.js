@@ -1,3 +1,4 @@
+import { initJuice, gameDt, updateJuice } from './FX/Juice.js';
 import './Styles/main.css';
 import { EDITOR, LEVEL_NAME } from './Core/Constants.js';
 import { G } from './Core/Game.js';
@@ -71,7 +72,7 @@ async function main() {
 
   initCodeRain(); initScreenFX(); initEngine();
   initWorldMesh(scene); initParticles(scene); initStartDesk(scene); initPlayer(scene);
-  initAgents(scene); initCams(scene); initRacks(scene); initLasers(scene); initTowers(scene); initSafes(scene); initCrystal(scene);
+  initAgents(scene); initCams(scene); initRacks(scene); initLasers(scene); initTowers(scene); initSafes(scene); initCrystal(scene); initJuice();
   initPortal(scene, { restart: () => goToLevel(pre + '1') }); initBullets(scene); initHideSpots(scene); initExitDoor(scene);
   initInput(); initGameScene(); initCaught(); initFloorSelect(); if (EDITOR) initEditor();
   document.getElementById('floorsBtn').addEventListener('click', openFloors);
@@ -85,6 +86,7 @@ async function main() {
 
 // un frame: lógica (intro o juego) y luego animaciones, efectos y cámara
 function frame(dt) {
+  const real = dt; dt = gameDt(dt);                         // hitstop / cámara lenta (Juice): solo el juego, la UI sigue normal
   G.t += dt;
   if (G.mode === 'play') { if (G.asm >= 0) updateAssembly(dt, scene, worldMesh, player.ch.root); else if (G.intro >= 0) updateIntro(dt); else updateGame(dt); }
   animatePlayer();
@@ -92,7 +94,7 @@ function frame(dt) {
   updateParticles(dt); animateHideSpots(dt, player);
   animateAgents(); animateCams(); animateRacks(); animateLasers(); animateTowers(dt); animateSafes(dt); animateCrystal(); animatePortal(dt);
   const cEl = document.getElementById('crystals'); cEl.textContent = `◆ ${crystalCount() + (G.gotCrystal && !G.hadCrystal ? 1 : 0)}`; cEl.classList.toggle('got', !!G.gotCrystal);
-  updateElevator(dt); updateCaught(dt);
-  updateCamera(dt, player); updateSeeThrough(dt, player);
+  updateElevator(real); updateCaught(real); updateJuice(real, cam, stage);
+  updateCamera(real, player); updateSeeThrough(dt, player);
   if (elevatorShown()) renderElevator(); else { preRender(); render(); postRender(); }
 }

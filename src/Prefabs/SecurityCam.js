@@ -6,6 +6,7 @@ import { box } from './Character.js';
 import { rayDist } from '../World/Grid.js';
 import { tileOn } from '../World/ShellBuilder.js';
 import { alertSound } from '../Core/Audio.js';
+import { shake, kick, hitstop, slowmo, flash, popText } from '../FX/Juice.js';
 import { alertAgents } from './Agent.js';
 
 // Cámaras de seguridad: van colgadas en las paredes (fondo o laterales) y barren de izquierda a derecha.
@@ -71,7 +72,7 @@ export function updateCamsAI(dt, player) {
       if (seen) c.meter = C.instant ? 1 : c.meter + dt * C.detect * (1 + (1 - dist / C.range) * 2); // instant: alarma apenas te ve
       else c.meter = Math.max(0, c.meter - dt * .4);
       if (c.meter >= 1) {                                               // ¡te vio!
-        c.state = 'track'; c.lostT = 0; c.callT = C.recall; G.alerts++; alertSound(); alertAgents(player.x, player.y);
+        c.state = 'track'; c.lostT = 0; c.callT = C.recall; G.alerts++; alertSound(); shake(.5); flash('255,42,42', .1); alertAgents(player.x, player.y);
       } else if (c.state === 'cool') {                                  // te perdió: se queda mirando ahí y luego vuelve a barrer
         if ((c.lostT -= dt) <= 0) { c.state = 'scan'; c.phase = Math.asin(Math.max(-1, Math.min(1, Math.atan2(Math.sin(c.ang - c.base), Math.cos(c.ang - c.base)) / C.sweep))); }
       } else if (seen) c.ang += rel * Math.min(1, dt * 1.5);                // algo vio: se queda mirando

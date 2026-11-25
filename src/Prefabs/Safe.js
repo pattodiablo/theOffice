@@ -8,6 +8,7 @@ import { listGeo } from '../Core/VoxelMesh.js';
 import { M } from '../Materials/Materials.js';
 import { ease } from '../Core/MathUtils.js';
 import { dialClick, safeOpenSound } from '../Core/Audio.js';
+import { shake, kick, hitstop, slowmo, flash, popText } from '../FX/Juice.js';
 import { puff } from '../FX/Particles.js';
 
 // Caja fuerte (prop "safe", modelo assets/vox/props/safe.vox con dos partes: "base" y "puerta").
@@ -68,6 +69,7 @@ export function updateSafes(dt, p) {
       if ((s.clickT -= dt) <= 0) { s.clickT = .09 + Math.random() * .08; dialClick(s.prog); }
       if (s.prog >= 1) {                                                 // ¡abierta!
         s.open = true; s.prog = 1; safeOpenSound(); puff(s.cx, s.cy);
+        shake(.7); kick(.08); popText(s.cx, s.cy, 'UNLOCKED!', 'cyan');
         if (s.hasCrystal) G.safeCrystal.open = true;
       }
     } else s.prog = Math.max(0, s.prog - dt * 1.5);                       // te alejaste: se pierde el avance

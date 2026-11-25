@@ -9,6 +9,7 @@ import { resetRacks, updateRacks } from '../Prefabs/ServerRack.js';
 import { resetLasers, updateLasers } from '../Prefabs/LaserGate.js';
 import { resetTowers, updateTowers } from '../Prefabs/SensorTower.js';
 import { resetSafes, updateSafes } from '../Prefabs/Safe.js';
+import { shake, kick, hitstop, slowmo, flash, popText, resetJuice } from '../FX/Juice.js';
 import { resetCrystal, updateCrystal } from '../Prefabs/Crystal.js';
 import { updatePortal } from '../Prefabs/Portal.js';
 import { updateBullets, clearBullets } from '../Prefabs/Bullet.js';
@@ -31,7 +32,7 @@ export function setMode(m) {
   if (G.entOk && m === 'play') { const [x, y] = G.ENT.point(5.5, .5); Object.assign(player, { x, y, ang: G.ENT.ang }); } // con entrada: espera detrás de las puertas
   resetIntro(m === 'play');
   Object.assign(G, { time: 0, frozen: 0, cool: 0, maxSeen: 0, alerts: 0, doorOpen: 0, doorWant: false, elev: 'idle', elevT: 0, usedGlitch: false, hiddenKind: null, hideT: 0, popT: 1 }); resetHideSpots();
-  setAlarm(0); setGlitchFX(false); setMeter(0);
+  setAlarm(0); setGlitchFX(false); setMeter(0); resetJuice();
 }
 
 
@@ -68,13 +69,19 @@ export function updateGame(dt) {
   updateCrystal(dt, player); updatePortal(dt, player);  // fragmento de realidad · portal del final
 }
 
+// glitch con golpe: zoom, destello verde y un micro-congelado (si se pudo usar)
+export function glitchJuice() {
+  const ready = G.mode === 'play' && G.cool <= 0; doGlitch();
+  if (ready && G.frozen > 0) { kick(.1); flash('59,224,124', .3); hitstop(.05); }
+}
+
 export function initGameScene() {
   addEventListener('keydown', e => {
     if (e.target.tagName === 'TEXTAREA') return;
     if (G.mode === 'play' && G.asm >= 0) skipAssembly();                                    // salta el ensamblado
     else if (G.mode === 'play' && G.intro >= 0) { if (G.intro > .3) finishIntro(); }          // cualquier tecla salta la intro
     else if (G.mode === 'play') {
-      if (e.code === 'Space') { e.preventDefault(); doGlitch(); }
+      if (e.code === 'Space') { e.preventDefault(); glitchJuice(); }
       if (e.code === 'Escape' && EDITOR) setMode('edit');
     } else if (G.mode === 'over' && e.code === 'Enter') setMode('play');
   });
