@@ -1,0 +1,21 @@
+{
+ "duration": 0.35,
+ "loop": false,
+ "tracks": {
+  "body.y": [
+   [
+    0,
+    0
+   ],
+   [
+    0.175,
+    3
+   ],
+   [
+    0.35,
+    0
+   ]
+  ]
+ },
+ "name": "alert_hop"
+}

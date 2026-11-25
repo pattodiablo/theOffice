@@ -1,0 +1,65 @@
+/* VOICE: herramienta de trabajo para diseñar niveles, directa
+   IDEA: consola de vigilancia de la oficina, fósforo verde
+   PICTURE: la oficina voxel 3D a pantalla completa con rutas y conos encima
+   COLOUR and TYPE: noche verde-petróleo, fósforo #3be07c, alarma #ff4d4d; Chakra Petch + Inter
+   LAYOUT: barra superior (modo, deshacer, JSON, estado), barra inferior de herramientas que hace scroll */
+:root{color-scheme:dark;--bg:#0b1512;--ink:#e9f5ee;--g:#3be07c;--r:#ff4d4d;--panel:rgba(8,20,16,.86);--line:rgba(59,224,124,.35)}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow:hidden}
+#stage{position:fixed;inset:0;touch-action:none;background:radial-gradient(120% 90% at 50% 40%,#183028,#0b1512 70%)}
+#stage canvas{display:block;width:100%;height:100%}
+button{font:600 14px Inter,sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;min-height:44px;padding:0 14px;cursor:pointer;white-space:nowrap;flex:none}
+button.on{background:var(--g);color:#06140d;border-color:var(--g)}
+button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.bar{position:fixed;left:0;right:0;z-index:2;display:flex;gap:8px;align-items:center;padding:10px 12px;overflow-x:auto;scrollbar-width:none}
+.bar::-webkit-scrollbar{display:none}
+#topbar{top:0;padding-top:max(10px,env(safe-area-inset-top));background:linear-gradient(#0b1512ee,#0b151200)}
+#toolbar{bottom:0;padding-bottom:max(10px,env(safe-area-inset-bottom));background:linear-gradient(#0b151200,#0b1512f2 40%)}
+.title{font:700 18px "Chakra Petch",sans-serif;margin-right:4px;flex:none}
+.sep{width:1px;height:28px;background:var(--line);flex:none}
+#status{font-size:13px;opacity:.9;flex:none;padding:0 4px}
+#status b{color:var(--g)} #status b.bad{color:var(--r)}
+.play-only,.route-only{display:none}
+body.play .play-only{display:flex} body.play .edit-only{display:none!important}
+body.route .route-only{display:inline-flex}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:-1px}
+#hud{position:fixed;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;z-index:2;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none}
+#hud button{pointer-events:auto}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:600 15px "Chakra Petch",sans-serif}
+#meterBox{width:min(200px,38vw)} #meterBox small{display:block;font:600 13px Inter;opacity:.8;margin-bottom:4px}
+#meter{height:10px;border-radius:5px;background:rgba(255,255,255,.12);overflow:hidden}
+#meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd24d,var(--r))}
+#btns{position:fixed;right:16px;bottom:max(18px,env(safe-area-inset-bottom));z-index:2;gap:14px}
+.round{width:74px;height:74px;border-radius:50%;border:2px solid var(--g);font:700 13px "Chakra Petch",sans-serif;padding:0;position:relative;touch-action:none}
+#glitch::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:conic-gradient(var(--g) var(--cd,360deg),transparent 0);-webkit-mask:radial-gradient(circle,transparent 40px,#000 41px);mask:radial-gradient(circle,transparent 40px,#000 41px)}
+#joy{position:fixed;z-index:2;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;border:2px solid rgba(59,224,124,.5);background:rgba(59,224,124,.08);display:none;pointer-events:none}
+#joy b{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px;border-radius:50%;background:var(--g);opacity:.85}
+#fx{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;background:repeating-linear-gradient(0deg,rgba(59,224,124,.10) 0 2px,transparent 2px 5px),rgba(20,90,50,.28);mix-blend-mode:screen}
+#alarm{position:fixed;inset:0;z-index:1;pointer-events:none}
+.modal{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:rgba(6,14,11,.75);padding:16px}
+.modal[hidden]{display:none}
+.card{max-width:460px;width:100%;background:#0f1f1a;border:1px solid var(--line);border-radius:16px;padding:22px}
+.card h2{font:700 clamp(26px,6vw,38px)/1.05 "Chakra Petch",sans-serif;margin:0 0 10px;text-wrap:balance}
+.card p{margin:0 0 14px;opacity:.88}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+textarea{width:100%;height:200px;background:#06110d;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;font:13px/1.4 ui-monospace,monospace;margin-bottom:12px}
+.stars{font-size:32px;letter-spacing:6px;color:var(--g);margin-bottom:8px}.stars .off{color:rgba(255,255,255,.18)}
+#tip{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:2;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:13px;white-space:nowrap;pointer-events:none;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
+body.play #tip{display:none}
+@media(max-width:600px){.title{display:none}.round{width:66px;height:66px}#glitch::before{-webkit-mask:radial-gradient(circle,transparent 36px,#000 37px);mask:radial-gradient(circle,transparent 36px,#000 37px)}}
+
+/* en el juego (index.html) se oculta todo lo del editor */
+body.game .edit-only, body.game #tip, body.game #backBtn{display:none!important}
+
+/* globo de cómic de la intro */
+#bubble{position:fixed;z-index:2;left:0;top:0;opacity:0;pointer-events:none;transform-origin:26px 100%;background:#fff;color:#111;font:400 30px/1 Bangers,"Chakra Petch",sans-serif;letter-spacing:.05em;padding:10px 18px 7px;border:4px solid #111;border-radius:22px;white-space:nowrap;box-shadow:4px 4px 0 rgba(0,0,0,.35)}
+#bubble::before{content:"";position:absolute;left:14px;bottom:-22px;border-style:solid;border-width:22px 16px 0 0;border-color:#111 transparent transparent transparent}
+#bubble::after{content:"";position:absolute;left:18px;bottom:-14px;border-style:solid;border-width:15px 10px 0 0;border-color:#fff transparent transparent transparent}
+
+/* ambientación verde: lluvia de código detrás, tinte y viñeta encima del 3D (debajo del HUD) */
+body{background:#020a05}
+#stage{background:transparent}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5;pointer-events:none}
+#tint{position:fixed;inset:0;z-index:1;pointer-events:none;background:#2bff7a;mix-blend-mode:color}
+#vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(0,18,7,.6) 100%),repeating-linear-gradient(0deg,rgba(0,0,0,.06) 0 1px,transparent 1px 3px)}
+

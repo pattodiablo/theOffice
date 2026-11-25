@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Escape de oficina · animaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="animator">
+<header id="anTop">
+  <span class="title">Animaciones</span>
+  <label class="field">Clip <select id="clipSel"></select></label>
+  <label class="field">Personaje <select id="charSel"><option value="player">Oficinista</option><option value="agent">Agente</option><option value="red">Agente rojo</option></select></label>
+  <button id="playBtn" class="on">▶ Play</button>
+  <label class="field chk"><input type="checkbox" id="loopChk"> En bucle</label>
+  <label class="field">Duración <input type="number" id="durInp" min="0.1" max="20" step="0.05"> s</label>
+  <button id="saveBtn">Guardar</button>
+  <button id="revertBtn">Recargar del archivo</button>
+  <button id="factoryBtn">De fábrica</button>
+  <a href="editor.html" class="linkbtn">← Editor de niveles</a>
+</header>
+<p id="anInfo"></p>
+<div id="anView"></div>
+<section id="anPanel">
+  <div class="timeRow">
+    <button id="toStart" title="Al inicio">⏮</button>
+    <input type="range" id="timeRange" min="0" max="1" step="0.01" value="0">
+    <span id="timeTxt">0.00 s</span>
+  </div>
+  <div id="channels"></div>
+  <p class="hint">Mueve un control para crear o cambiar el keyframe en el tiempo actual · ◆ marca el valor actual · ✕ borra el keyframe de este tiempo · clic en una pista para ir a ese tiempo · arrastra la vista para girar la cámara</p>
+</section>
+<script type="module" src="/src/animator.js"></script>
+</body>
+</html>

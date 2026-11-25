@@ -1,0 +1,97 @@
+import './Styles/main.css';
+import { EDITOR, LEVEL_NAME } from './Core/Constants.js';
+import { G } from './Core/Game.js';
+import { initEngine, scene, cam, stage, updateCamera, render, startLoop } from './Core/Engine.js';
+import { initInput } from './Core/Input.js';
+import { initPalette } from './Materials/Palette.js';
+import { initMaterials } from './Materials/Materials.js';
+import { initProps } from './Data/PropLibrary.js';
+import { loadLevel, loadDraft, prefetchLevel, nextLevelName } from './Data/LevelIO.js';
+import { initWorldMesh } from './World/Grid.js';
+import { initStartDesk, updateStartDesk } from './Prefabs/StartDesk.js';
+import { initPlayer, animatePlayer, player } from './Prefabs/Player.js';
+import { initAgents, animateAgents } from './Prefabs/Agent.js';
+import { initCams, animateCams } from './Prefabs/SecurityCam.js';
+import { initRacks, animateRacks } from './Prefabs/ServerRack.js';
+import { initLasers, animateLasers } from './Prefabs/LaserGate.js';
+import { initTowers, animateTowers } from './Prefabs/SensorTower.js';
+import { initCrystal, animateCrystal } from './Prefabs/Crystal.js';
+import { initPortal, animatePortal } from './Prefabs/Portal.js';
+import { initFloorSelect, openFloors, goToLevel } from './UI/FloorSelect.js';
+import { hasProgress, nextToPlay, crystalCount } from './Data/Progress.js';
+import { countLevels, loadLevelNamed } from './Data/LevelIO.js';
+import { initBullets } from './Prefabs/Bullet.js';
+import { initHideSpots, animateHideSpots } from './Prefabs/HideSpot.js';
+import { initExitDoor, updateExitDoor } from './Prefabs/ExitDoor.js';
+import { updateIntro } from './Animations/IntroAnimation.js';
+import { loadClips } from './Animations/Clips.js';
+import { loadCharacterModels } from './Prefabs/Character.js';
+import { updateSeeThrough } from './FX/SeeThrough.js';
+import { updateAssembly, setAssemblyScene, preRender, postRender } from './FX/Assemble.js';
+import { worldMesh } from './World/Grid.js';
+import { initParticles, updateParticles } from './FX/Particles.js';
+import { initCodeRain, updateCodeRain } from './FX/CodeRain.js';
+import { initScreenFX } from './FX/ScreenFX.js';
+import { updateBubble } from './FX/Bubble.js';
+import { rebuild } from './Scenes/Level.js';
+import { initGameScene, updateGame, setMode } from './Scenes/GameScene.js';
+import { initEditor, startEditor } from './Scenes/EditorScene.js';
+import { initElevator, initFloors, updateElevator, elevatorShown, renderElevator } from './Scenes/ElevatorScene.js';
+import { initCaught, updateCaught } from './Scenes/CaughtScene.js';
+
+// Punto de entrada: carga los datos, crea los objetos de la escena y arranca el bucle.
+main();
+
+// barra de la pantalla de carga (index.html / editor.html)
+function loadStep(k, txt) { const b = document.getElementById('loadBar'), t = document.getElementById('loadTxt'); if (b) b.style.width = k * 100 + '%'; if (t) t.textContent = txt; }
+function hideLoader() {
+  document.body.classList.add('ready'); const l = document.getElementById('loader');
+  if (l) { l.classList.add('out'); setTimeout(() => l.remove(), 500); }
+}
+// lo que no hace falta para el primer nivel se prepara después de empezar (escena del ascensor, cuenta de pisos, siguiente nivel)
+function lazyLoad() {
+  const idle = f => window.requestIdleCallback ? requestIdleCallback(f, { timeout: 1500 }) : setTimeout(f, 300); // a más tardar en 1,5 s
+  idle(() => { initElevator(); initFloors(); prefetchLevel(nextLevelName(G.levelName)); });
+}
+
+async function main() {
+  loadStep(.1, 'LOADING OFFICE');
+  G.DATA = await (await fetch('data/office.json')).json();
+  initPalette(G.DATA.colors); initMaterials(); initProps(G.DATA);
+  loadStep(.4, 'LOADING PEOPLE'); await Promise.all([loadClips(), loadCharacterModels()]);
+  loadStep(.7, 'LOADING FLOOR');
+  // si ya jugaste antes (y la dirección no pide un piso), retoma en el primer piso que no terminaste
+  let start = LEVEL_NAME; const pre = (LEVEL_NAME.match(/^(.*?)\d+$/) || [0, 'piso'])[1];
+  if (!EDITOR && !new URLSearchParams(location.search).has('nivel') && hasProgress()) start = nextToPlay(pre, await countLevels(pre + '1'));
+  G.level = start !== LEVEL_NAME ? await loadLevelNamed(start) : null;
+  if (!G.level) { start = LEVEL_NAME; G.level = await loadLevel(); }
+  G.levelName = start;
+  if (EDITOR) G.level = loadDraft() || G.level;          // el editor retoma el borrador si hay uno
+
+  initCodeRain(); initScreenFX(); initEngine();
+  initWorldMesh(scene); initParticles(scene); initStartDesk(scene); initPlayer(scene);
+  initAgents(scene); initCams(scene); initRacks(scene); initLasers(scene); initTowers(scene); initCrystal(scene);
+  initPortal(scene, { restart: () => goToLevel(pre + '1') }); initBullets(scene); initHideSpots(scene); initExitDoor(scene);
+  initInput(); initGameScene(); initCaught(); initFloorSelect(); if (EDITOR) initEditor();
+  document.getElementById('floorsBtn').addEventListener('click', openFloors);
+
+  loadStep(.9, 'BUILDING'); setAssemblyScene(scene, worldMesh); rebuild();
+  if (EDITOR) startEditor(); else setMode('play');        // sin pantalla de título: el nivel arranca directo
+  startLoop(frame); loadStep(1, 'READY');
+  requestAnimationFrame(() => requestAnimationFrame(hideLoader));
+  lazyLoad();
+}
+
+// un frame: lógica (intro o juego) y luego animaciones, efectos y cámara
+function frame(dt) {
+  G.t += dt;
+  if (G.mode === 'play') { if (G.asm >= 0) updateAssembly(dt, scene, worldMesh, player.ch.root); else if (G.intro >= 0) updateIntro(dt); else updateGame(dt); }
+  animatePlayer();
+  updateStartDesk(); updateBubble(cam, stage); updateExitDoor(dt); updateCodeRain(dt);
+  updateParticles(dt); animateHideSpots(dt, player);
+  animateAgents(); animateCams(); animateRacks(); animateLasers(); animateTowers(dt); animateCrystal(); animatePortal(dt);
+  const cEl = document.getElementById('crystals'); cEl.textContent = `◆ ${crystalCount() + (G.gotCrystal && !G.hadCrystal ? 1 : 0)}`; cEl.classList.toggle('got', !!G.gotCrystal);
+  updateElevator(dt); updateCaught(dt);
+  updateCamera(dt, player); updateSeeThrough(dt, player);
+  if (elevatorShown()) renderElevator(); else { preRender(); render(); postRender(); }
+}

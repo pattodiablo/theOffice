@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Escape de oficina · editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Pantalla de carga: va aquí (no en main.css) para que se vea antes de que cargue todo y no aparezca
+   la página sin estilos (textos como "WAKE UP!" sueltos). Se quita sola cuando el nivel está listo. */
+html,body{margin:0;background:#020a05}
+body:not(.ready)>:not(#loader){visibility:hidden!important}
+#loader{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  background:#020a05;color:#3be07c;font:600 14px/1.4 ui-monospace,"SF Mono",Menlo,Consolas,monospace;transition:opacity .45s}
+#loader.out{opacity:0;pointer-events:none}
+#loader h1{margin:0;font-size:clamp(22px,5vw,40px);letter-spacing:.12em;text-shadow:0 0 18px rgba(59,224,124,.55)}
+#loader .lbar{width:min(320px,70vw);height:6px;border:1px solid rgba(59,224,124,.5);border-radius:4px;overflow:hidden}
+#loader .lbar i{display:block;height:100%;width:0;background:#3be07c;box-shadow:0 0 12px #3be07c;transition:width .25s}
+#loader .ltxt{opacity:.75;letter-spacing:.08em}
+#loader .ltxt::after{content:"▌";animation:lblink 1s steps(1) infinite;margin-left:3px}
+@keyframes lblink{50%{opacity:0}}
+</style>
+</head>
+<body data-mode="editor">
+<div id="loader"><h1>ESCAPE THE OFFICE</h1><div class="lbar"><i id="loadBar"></i></div><div class="ltxt" id="loadTxt">LOADING</div></div>
+<div id="stage"></div>
+<div id="fx"></div><div id="alarm"></div>
+
+<div class="bar edit-only" id="topbar">
+  <span class="title">Editor · Piso 1</span>
+  <button id="testBtn" class="on">Probar ▶</button>
+  <button id="undoBtn">Deshacer</button>
+  <button id="saveBtn">Guardar</button>
+  <button id="jsonBtn">JSON</button>
+  <a href="animator.html" class="linkbtn">Animaciones</a>
+  <span id="status"></span>
+</div>
+
+<div class="bar edit-only" id="toolbar"></div>
+<div id="tip">Elige un prop y haz clic en el piso para colocarlo</div>
+
+<div class="bar play-only" id="hud">
+  <div class="row"><button id="backBtn">◀ Editor</button><button id="floorsBtn" title="Floors">☰</button><div class="chip" id="info">0.0 s</div><div class="chip" id="crystals">◆ 0</div></div>
+  <div class="chip" id="meterBox"><div id="meter"><i></i></div></div>
+</div>
+<div id="joy"><b></b></div>
+<div id="bubble">WAKE UP!</div>
+
+<div class="modal" id="endModal" hidden><div class="card" id="endCard"></div></div>
+<div class="modal" id="jsonModal" hidden><div class="card">
+  <h2>Nivel en JSON</h2>
+  <p>Copia el texto para guardarlo, o pega uno y cárgalo.</p>
+  <textarea id="jsonTxt" spellcheck="false"></textarea>
+  <div class="row">
+    <button id="copyBtn">Copiar</button><button id="loadBtn">Cargar</button>
+    <button id="resetBtn">Recargar del archivo</button><button id="closeBtn">Cerrar</button>
+  </div>
+  <p id="jsonMsg" style="margin:10px 0 0;font-size:13px"></p>
+</div></div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
