@@ -7,6 +7,7 @@ import { listGeo } from '../Core/VoxelMesh.js';
 import { M } from '../Materials/Materials.js';
 import { laserEnds } from './LaserGate.js';
 import { zapSound, towerRiseSound } from '../Core/Audio.js';
+import { shake, kick, hitstop, slowmo, flash, popText } from '../FX/Juice.js';
 
 // Torre sensor (prop "tower", modelo assets/vox/props/tower.vox con dos partes: "base" y "torre").
 // La base va pegada al escenario; la torre está escondida dentro de la base. Si el jugador entra en su radio
@@ -58,7 +59,7 @@ export function updateTowers(dt, p) {
     w.t += dt;
     if (w.state === 'idle' && near) { w.state = 'rise'; w.t = 0; towerRiseSound(); }
     else if (w.state === 'rise' && w.t >= T.riseTime) { w.state = 'charge'; w.t = 0; }
-    else if (w.state === 'charge' && w.t >= T.chargeTime) { w.state = 'fire'; w.t = 0; zapSound(.8); }
+    else if (w.state === 'charge' && w.t >= T.chargeTime) { w.state = 'fire'; w.t = 0; zapSound(.8); if (near) shake(.45); }
     else if (w.state === 'fire' && w.t >= T.fireTime) { w.state = 'rest'; w.t = 0; }
     else if (w.state === 'rest' && w.t >= T.restTime) { w.state = near ? 'charge' : 'lower'; w.t = 0; }
     else if (w.state === 'lower' && w.t >= T.riseTime) { w.state = 'idle'; w.t = 0; }

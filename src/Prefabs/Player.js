@@ -1,6 +1,7 @@
 import { Z } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
-import { PLAYER_SPEED, GLITCH_TIME, GLITCH_COOLDOWN, STEP_VOLUME, STEP_TIME, ANIM_SPEED } from '../Settings.js';
+import { PLAYER_SPEED, GLITCH_TIME, GLITCH_COOLDOWN, STEP_VOLUME, STEP_TIME, ANIM_SPEED, JUICE } from '../Settings.js';
+import { dust } from '../FX/Particles.js';
 import { footstep } from '../Core/Audio.js';
 import { makeCharacter } from './Character.js';
 import { ENT_APPEAR } from '../Animations/IntroAnimation.js';
@@ -27,6 +28,7 @@ export function movePlayer(dt) {
   if ((player.stepT -= dt) <= 0) {                               // pasos
     player.stepT = STEP_TIME;
     if (STEP_VOLUME) footstep(.11 * STEP_VOLUME, 0, 1);
+    if (JUICE.on && JUICE.dust && !G.hiddenKind) dust(player.x, player.y);   // polvito en cada paso
   }
   const sp = PLAYER_SPEED * dt;
   if (free(player.x + mx * sp, player.y)) player.x += mx * sp;   // ejes por separado: se desliza por las paredes

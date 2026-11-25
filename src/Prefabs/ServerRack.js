@@ -5,6 +5,7 @@ import { G } from '../Core/Game.js';
 import { RACK } from '../Settings.js';
 import { rot } from '../Data/PropLibrary.js';
 import { hackBeep, powerDownSound, bootSound } from '../Core/Audio.js';
+import { shake, kick, hitstop, slowmo, flash, popText } from '../FX/Juice.js';
 import { puff } from '../FX/Particles.js';
 import { rebootCams } from './SecurityCam.js';
 
@@ -54,6 +55,7 @@ export function updateRacks(dt, p) {
       if ((r.beepT -= dt) <= 0) { r.beepT = .25; hackBeep(r.prog); }
       if (r.prog >= 1) {                               // ¡listo! se apagan las cámaras
         G.camsOff = true; G.camsOffT = RACK.offTime; r.prog = 0; powerDownSound(); puff(r.x, r.y);
+        shake(.6); kick(.06); flash('77,184,255', .25); popText(r.x, r.y, 'CAMERAS OFFLINE', 'blue');
         for (const o of racks) o.prog = 0;
         showToast(`<i>⏻</i> CAMERAS OFFLINE <small>${RACK.offTime > 0 ? `for ${RACK.offTime}s` : 'security cameras disabled'}</small>`, 'off');
         return;

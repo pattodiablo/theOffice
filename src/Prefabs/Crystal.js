@@ -7,6 +7,7 @@ import { crystalSound } from '../Core/Audio.js';
 import { puff } from '../FX/Particles.js';
 import { player } from './Player.js';
 import { safeCrystalPos } from './Safe.js';
+import { shake, kick, hitstop, flash } from '../FX/Juice.js';
 
 // Cristal: un "fragmento de realidad" por nivel (level.crystal = { x, y }, se pone en el editor › Nivel › Cristal).
 // Flota y gira; al tocarlo se recoge. Cuenta para el progreso cuando terminas el piso con él.
@@ -88,6 +89,7 @@ export function updateCrystal(dt, p) {
   const c = where(); if (!c || !c.ready || G.gotCrystal) return;
   if (Math.hypot(p.x - c.x, p.y - c.y) < CRYSTAL.pickR) {
     G.gotCrystal = true; crystalSound(); puff(c.x, c.y);
+    hitstop(.09); kick(.12); shake(.4); flash('120,220,255', .4);
     pickT0 = G.t; absorbed = false; from = { x: c.x, y: c.y, z: Z + 8 + c.hop + Math.sin(G.t * 2.4) * .9 };
     showToast(G.hadCrystal ? 'REALITY FRAGMENT <small>(already yours)</small>' : 'REALITY FRAGMENT ACQUIRED');
   }

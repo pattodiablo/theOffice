@@ -149,6 +149,7 @@ src/
     IntroAnimation.js       eventos de la intro (timbre, silla)
   FX/
     CodeRain.js  Particles.js  ScreenFX.js  Bubble.js
+    Juice.js                jugosidad: sacudones, golpes de zoom, cámara lenta, destellos y textos flotantes
     SeeThrough.js           transparenta lo que tapa al jugador frente a la cámara
     Assemble.js             el nivel se arma pieza por pieza antes de la intro (como un sueño)
   UI/

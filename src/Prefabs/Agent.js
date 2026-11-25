@@ -11,6 +11,7 @@ import { rayDist } from '../World/Grid.js';
 import { flowFrom, stepFlow } from '../World/Navigation.js';
 import { turnTo } from '../Core/MathUtils.js';
 import { alertSound, footstep } from '../Core/Audio.js';
+import { shake, kick, hitstop, slowmo, flash, popText } from '../FX/Juice.js';
 import { fireBullet } from './Bullet.js';
 import { player } from './Player.js';
 
@@ -116,7 +117,7 @@ function hunchTarget(a, i, p) {
   return field[Math.floor(a.x) + Math.floor(a.y) * W] > 0 ? field : null;
 }
 
-function startAlert(a) { a.state = 'alert'; a.timer = a.P.alertFreeze; a.hopT = 0; a.meter = 1; G.alerts++; alertSound(); a.caller = true; a.callT = 3; callForHelp(a); }
+function startAlert(a) { a.state = 'alert'; a.timer = a.P.alertFreeze; a.hopT = 0; a.meter = 1; G.alerts++; alertSound(); shake(.8); kick(.06); flash('255,42,42', .14); a.caller = true; a.callT = 3; callForHelp(a); }
 
 // refuerzos: los agentes cercanos que no te están persiguiendo vienen a ayudar
 function callForHelp(caller) {

@@ -80,6 +80,15 @@ export const TOWER = {
   baseLayers: 2,              // si tower.vox es un solo modelo: capas de abajo que son la base (lo de arriba se levanta)
 };
 // Cristales (fragmentos de realidad, uno por piso) y el portal del final
+// "Jugosidad" (FX/Juice.js): sacudones, golpes de zoom, cámara lenta, destellos y textos flotantes
+export const JUICE = {
+  on: true,                   // false = sin ningún efecto
+  shake: 1,                   // fuerza de los sacudones (0 = sin sacudón)
+  zoom: 1,                    // fuerza de los golpes de zoom
+  slowmo: true,               // cámara lenta en los "casi me dan"
+  nearMiss: 4.5,              // a qué distancia una bala cuenta como "casi me dan" (vóxeles)
+  dust: true,                 // polvito al caminar
+};
 export const CRYSTAL = { pickR: 3.5 };
 // Caja fuerte (prop "safe"): si el nivel tiene una, el cristal está ADENTRO (se ignora el cristal suelto).
 // Hay que quedarse pegado a ella (dentro del círculo) crackTime segundos; si te alejas se pierde el avance.

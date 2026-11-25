@@ -55,15 +55,18 @@ function fitWorld() {                                // centro del nivel y sombr
   Object.assign(sun.shadow.camera, { left: -k, right: k, top: k, bottom: -k, far: 300 + k * 2 }); sun.shadow.camera.updateProjectionMatrix();
   resize();
 }
+let baseZoom = 1;
 export function updateCamera(dt, player) {
   if (sized !== W + 'x' + D) { sized = W + 'x' + D; fitWorld(); }
   if (G.mode === 'edit') camGoal.copy(CENTER); else camGoal.set(player.x, Z + 6, -player.y);
   const zoomGoal = G.asm >= 0 ? ASSEMBLE_ZOOM : G.intro >= 0 ? (G.intro < (G.entOk ? 2.4 : 2.7) ? 1.4 : 1) : G.mode === 'play' && player.moving ? CAM_WALK_ZOOM : 1;
-  cam.zoom = G.snapCam ? zoomGoal : cam.zoom + (zoomGoal - cam.zoom) * Math.min(1, dt * CAM_ZOOM_SPEED); cam.updateProjectionMatrix();
+  baseZoom = G.snapCam ? zoomGoal : baseZoom + (zoomGoal - baseZoom) * Math.min(1, dt * CAM_ZOOM_SPEED);
+  G.zoomKick = (G.zoomKick || 0) * Math.exp(-dt * 9);                       // golpe de zoom (Juice.kick): se acerca y vuelve
+  cam.zoom = baseZoom * (1 + G.zoomKick); cam.updateProjectionMatrix();
   target.lerp(camGoal, G.snapCam ? 1 : Math.min(1, dt * 6)); G.snapCam = false;
   if (G.mode === 'edit') editOff.set(Math.sin(viewYaw) * Math.cos(viewPitch), Math.sin(viewPitch), Math.cos(viewYaw) * Math.cos(viewPitch)).multiplyScalar(CAM_DIST);
   cam.position.copy(target).add(G.mode === 'edit' ? editOff : CAM_OFF); cam.lookAt(target);
-  if (G.shake > 0) {                                 // sacudón (al ser atrapado)
+  if (G.shake > 0) {                                 // sacudón (al ser atrapado y en los golpes de Juice.shake)
     cam.position.x += (Math.random() - .5) * G.shake * 2; cam.position.y += (Math.random() - .5) * G.shake * 2;
     G.shake = Math.max(0, G.shake - dt * 4);
   }

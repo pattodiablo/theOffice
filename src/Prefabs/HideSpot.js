@@ -8,6 +8,7 @@ import { M } from '../Materials/Materials.js';
 import { popScale } from '../Core/MathUtils.js';
 import { puff } from '../FX/Particles.js';
 import { puffSound } from '../Core/Audio.js';
+import { shake, kick, hitstop, slowmo, flash, popText } from '../FX/Juice.js';
 
 // Escondites: círculo en el piso + silueta del objeto. Dentro, el jugador se vuelve planta o basurero
 // y los agentes no lo detectan. El disfraz dura HIDE_TIME segundos; después vuelves a la normalidad
@@ -59,7 +60,7 @@ export function resetHideSpots() { current = -1; for (const z of zones) z.cd = 0
 
 export const hideAt = (x, y) => (G.level.hides || []).findIndex(h => Math.hypot(x - h.x, y - h.y) < HIDE_R);
 
-function setHidden(k, p) { puffSound(!!k); G.hiddenKind = k; G.popT = 0; puff(p.x, p.y); } // ¡puf! al esconderse y al salir
+function setHidden(k, p) { puffSound(!!k); kick(.035); G.hiddenKind = k; G.popT = 0; puff(p.x, p.y); } // ¡puf! al esconderse y al salir
 
 // lógica (solo jugando): entrar, durar, salir y recargar
 export function updateCamouflage(p, dt) {
