@@ -28,8 +28,8 @@ export function initEngine() {
   scene.fog = new THREE.Fog(0x03140a, 240, 420);    // lo lejano se hunde en verde oscuro
   cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 1000);
   cam.position.copy(target).add(CAM_OFF); cam.lookAt(target);
-  scene.add(new THREE.HemisphereLight(0xc4ffd6, 0x0d2a18, 1.7));
-  sun = new THREE.DirectionalLight(0xe2ffe9, 2.1);
+  scene.add(new THREE.HemisphereLight(0xc4ffd6, 0x0d2a18, 1.9));
+  sun = new THREE.DirectionalLight(0xe2ffe9, 2.35);
   sun.position.set(130, 140, 20); sun.target.position.set(64, 0, -52); scene.add(sun, sun.target);
   sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
   Object.assign(sun.shadow.camera, { left: -110, right: 110, top: 110, bottom: -110, near: 10, far: 400 });

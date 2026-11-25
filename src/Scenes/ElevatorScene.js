@@ -76,8 +76,8 @@ function buildSegment(k) {
 function buildElevator() {
   elevScene = new THREE.Scene();
   elevCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 1000);
-  elevScene.add(new THREE.HemisphereLight(0xc4ffd6, 0x0d2a18, 1.7));
-  const sun = new THREE.DirectionalLight(0xe2ffe9, 1.6); sun.position.set(60, 90, 30); elevScene.add(sun);
+  elevScene.add(new THREE.HemisphereLight(0xc4ffd6, 0x0d2a18, 1.9));
+  const sun = new THREE.DirectionalLight(0xe2ffe9, 1.8); sun.position.set(60, 90, 30); elevScene.add(sun);
   for (let k = 0; k < SEGS; k++) buildSegment(k);
   for (const x of [-SHAFT + 2, SHAFT - 2]) box(elevScene, .8, 400, .8, 0x6a7570, x, 100, -SHAFT + 1.2);   // rieles (no se mueven: se ven iguales)
 
