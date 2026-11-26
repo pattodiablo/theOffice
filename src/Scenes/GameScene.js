@@ -9,6 +9,8 @@ import { resetRacks, updateRacks } from '../Prefabs/ServerRack.js';
 import { resetLasers, updateLasers } from '../Prefabs/LaserGate.js';
 import { resetTowers, updateTowers } from '../Prefabs/SensorTower.js';
 import { resetSafes, updateSafes } from '../Prefabs/Safe.js';
+import { updateRealityPortals } from '../Prefabs/RealityPortal.js';
+import { resetMainFrames, updateMainFrames } from '../Prefabs/MainFrame.js';
 import { shake, kick, hitstop, slowmo, flash, popText, resetJuice } from '../FX/Juice.js';
 import { resetCrystal, updateCrystal } from '../Prefabs/Crystal.js';
 import { updatePortal } from '../Prefabs/Portal.js';
@@ -28,7 +30,7 @@ import { startCaught, resetCaught } from './CaughtScene.js';
 export function setMode(m) {
   G.mode = m; resize(); G.snapCam = true; document.body.classList.toggle('play', m !== 'edit'); hideScreen(); resetExit(); resetCaught(); clearBullets();
   if (EDITOR) onModeChange(m);
-  resetAgents(); resetCams(); resetRacks(); resetLasers(); resetTowers(); resetSafes(); resetCrystal(); Object.assign(player, { x: G.seat.x, y: G.seat.y, ang: Math.PI / 2, vx: 0, vy: 0 });
+  resetAgents(); resetCams(); resetRacks(); resetLasers(); resetTowers(); resetSafes(); resetMainFrames(); resetCrystal(); Object.assign(player, { x: G.seat.x, y: G.seat.y, ang: Math.PI / 2, vx: 0, vy: 0 });
   if (G.entOk && m === 'play') { const [x, y] = G.ENT.point(5.5, .5); Object.assign(player, { x, y, ang: G.ENT.ang }); } // con entrada: espera detrás de las puertas
   resetIntro(m === 'play');
   Object.assign(G, { time: 0, frozen: 0, cool: 0, maxSeen: 0, alerts: 0, doorOpen: 0, doorWant: false, elev: 'idle', elevT: 0, usedGlitch: false, hiddenKind: null, hideT: 0, popT: 1 }); resetHideSpots();
@@ -63,10 +65,10 @@ export function updateGame(dt) {
   setTime(G.time);
 
   const shotBy = G.frozen > 0 ? null : updateBullets(dt, player);  // las balas también se congelan con el glitch
-  const zapped = updateLasers(dt, player) | updateTowers(dt, player);  // láseres y torres disparando: tocarlos mata
+  const zapped = updateLasers(dt, player) | updateTowers(dt, player) | updateMainFrames(dt, player);  // láseres y torres disparando: tocarlos mata
   if (caughtBy || shotBy || zapped) startCaught(caughtBy || shotBy || null);          // sacudón, fundido y mensaje
   else if (crossedExit(player)) startExit();           // cruzó la puerta: escena del ascensor
-  updateCrystal(dt, player); updatePortal(dt, player);  // fragmento de realidad · portal del final
+  updateCrystal(dt, player); updatePortal(dt, player); updateRealityPortals(dt, player);  // fragmento de realidad · portal del final
 }
 
 // glitch con golpe: zoom, destello verde y un micro-congelado (si se pudo usar)

@@ -184,3 +184,12 @@ export const safeOpenSound = () => tone((a, t0) => {
   h.gain.setValueAtTime(.0001, t0 + .12); h.gain.exponentialRampToValueAtTime(.03, t0 + .2); h.gain.exponentialRampToValueAtTime(.0001, t0 + .75);
   c.connect(h).connect(a.destination); c.start(t0 + .12); c.stop(t0 + .8);
 });
+// noqueo: golpe seco y grave + "tump" del guardia al caer
+export const koSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'square'; o.frequency.setValueAtTime(220, t0); o.frequency.exponentialRampToValueAtTime(55, t0 + .12);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.25, t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .16);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .18);
+  const f = a.createOscillator(), h = a.createGain(); f.type = 'sine'; f.frequency.setValueAtTime(90, t0 + .28); f.frequency.exponentialRampToValueAtTime(40, t0 + .45);
+  h.gain.setValueAtTime(.0001, t0 + .28); h.gain.exponentialRampToValueAtTime(.3, t0 + .29); h.gain.exponentialRampToValueAtTime(.0001, t0 + .5);
+  f.connect(h).connect(a.destination); f.start(t0 + .28); f.stop(t0 + .52);
+});

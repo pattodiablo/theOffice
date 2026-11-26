@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Z, W, D } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
-import { AGENT_TYPES, VISION_RAYS as NR, SEMA, CATCH_DIST, STEP_VOLUME, AGENT_STEP_RANGE, ANIM_SPEED } from '../Settings.js';
+import { AGENT_TYPES, VISION_RAYS as NR, SEMA, CATCH_DIST, STEP_VOLUME, AGENT_STEP_RANGE, ANIM_SPEED, TAKEDOWN } from '../Settings.js';
 import { makeCharacter, box } from './Character.js';
 import { PROPS, rot, propGeo } from '../Data/PropLibrary.js';
 import { M } from '../Materials/Materials.js';
@@ -10,9 +10,10 @@ import { sampleClip, clips, overlayClip } from '../Animations/Clips.js';
 import { rayDist } from '../World/Grid.js';
 import { flowFrom, stepFlow } from '../World/Navigation.js';
 import { turnTo } from '../Core/MathUtils.js';
-import { alertSound, footstep } from '../Core/Audio.js';
+import { alertSound, footstep, koSound } from '../Core/Audio.js';
 import { shake, kick, hitstop, slowmo, flash, popText } from '../FX/Juice.js';
 import { fireBullet } from './Bullet.js';
+import { puff } from '../FX/Particles.js';
 import { player } from './Player.js';
 
 // Agente: modelo + cono de visión + radio de acción + IA. Hay tres tipos (ver AGENT_TYPES en Settings.js):
@@ -92,12 +93,20 @@ function makeDrone(P) {
 function shoot(a) { if (a.ch.drone) { fireBullet(a, player, tipPos(a, 0)); fireBullet(a, player, tipPos(a, 1)); } else fireBullet(a, player); }
 // posición (en el piso, vóxeles) del cañón k de un dron
 const tipPos = (a, k) => { const [f, s] = a.ch.tips[k], c = Math.cos(a.ang), si = Math.sin(a.ang); return { x: a.x + c * f - si * s, y: a.y + si * f + c * s }; };
+// estrellitas girando sobre la cabeza del noqueado
+function makeStars() {
+  const g = new THREE.Group(), m = new THREE.MeshBasicMaterial({ color: 0xffe45c, transparent: true, depthWrite: false });
+  const geo = new THREE.OctahedronGeometry(.9);
+  for (let i = 0; i < 3; i++) { const s = new THREE.Mesh(geo, m); s.userData.a = i / 3 * Math.PI * 2; g.add(s); }
+  g.visible = false; scene.add(g); return g;
+}
+
 function makeAgent(type) {
   const P = AGENT_TYPES[type];
   const ch = P.drone ? makeDrone(P) : makeCharacter(scene, true, type === 'red');
-  return { type, P, ch, fan: makeFan(), ring: makeRing(P.actionR), mark: makeMark(), markSym: null, markT: 0, markA: 0, lasers: P.shoots ? (P.drone ? [makeLaser(), makeLaser()] : [makeLaser()]) : [] };
+  return { type, P, ch, fan: makeFan(), ring: makeRing(P.actionR), mark: makeMark(), stars: makeStars(), fall: 0, markSym: null, markT: 0, markA: 0, lasers: P.shoots ? (P.drone ? [makeLaser(), makeLaser()] : [makeLaser()]) : [] };
 }
-function removeAgent(a) { scene.remove(a.ch.root, a.fan, a.ring, a.mark, ...a.lasers); }
+function removeAgent(a) { scene.remove(a.ch.root, a.fan, a.ring, a.mark, a.stars, ...a.lasers); }
 
 // crea, cambia o quita agentes para que coincidan con las rutas y tipos del nivel
 export function syncAgents() {
@@ -117,7 +126,7 @@ export function resetAgents() {
     const ang = p.length > 1 ? Math.atan2(p[1][1] - p[0][1], p[1][0] - p[0][0]) : 0;
     Object.assign(a, { x: p[0][0], y: p[0][1], wp: Math.min(1, p.length - 1), dir: 1, wait: 0, meter: 0, ang, lost: 0, base: ang, moving: false,
       state: 'patrol', timer: 0, lose: 0, hopT: 9, lastField: null, retField: null, aim: 0, shotCD: 0,
-      burstLeft: 0, burstT: 0, hunchT: nextHunch(a) + 4, invField: null, predField: null, predT: 0, lastVX: 0, lastVY: 0, assistField: null, caller: false, callT: 0 });
+      burstLeft: 0, burstT: 0, hunchT: nextHunch(a) + 4, invField: null, predField: null, predT: 0, lastVX: 0, lastVY: 0, assistField: null, caller: false, callT: 0, koT: 0, found: false, fall: 0 });
     for (const l of a.lasers) l.visible = false;
   }
 }
@@ -157,6 +166,33 @@ function summon(b, x, y) {
   else { b.state = 'assist'; b.assistField = flowFrom(x, y); b.meter = Math.max(b.meter, .6); }       // el normal: corre a donde te vieron
 }
 // cámaras de seguridad: llaman a todos los agentes disponibles (sin límite de distancia) hacia (x, y)
+// ---------- noquear por la espalda ----------
+const CALM = ['patrol', 'investigate', 'search', 'return'];
+function canTakedown(a, p) {
+  if (!TAKEDOWN.on || a.P.drone || G.hiddenKind || !CALM.includes(a.state)) return false;
+  const dx = p.x - a.x, dy = p.y - a.y; if (Math.hypot(dx, dy) > TAKEDOWN.reach) return false;
+  if (G.frozen > 0) return true;                                        // con el glitch, aunque te mire
+  let rel = Math.atan2(dy, dx) - a.ang; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+  return Math.abs(rel) > Math.PI / 2;                                    // estás en su mitad de atrás
+}
+function knockOut(a, p) {
+  Object.assign(a, { state: 'ko', koT: TAKEDOWN.koTime, meter: 0, aim: 0, burstLeft: 0, caller: false, found: false });
+  a.ang = Math.atan2(a.y - p.y, a.x - p.x);                              // cae hacia adelante, lejos de ti
+  G.takedowns = (G.takedowns || 0) + 1;
+  koSound(); puff(a.x, a.y); hitstop(.1); shake(.9); kick(.12); flash('255,255,255', .25); popText(a.x, a.y, 'TAKEDOWN!');
+}
+// un guardia tranquilo que ve a un compañero en el piso va a revisar ("?")
+function spotBodies(a) {
+  for (const b of agents) {
+    if (b === a || b.state !== 'ko' || b.found) continue;
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy); if (d > a.P.range) continue;
+    let rel = Math.atan2(dy, dx) - a.ang; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+    if (Math.abs(rel) > a.P.half || rayDist(a.x, a.y, Math.atan2(dy, dx), d, a.P.seeOver || 12) < d - 2) continue;
+    b.found = true; a.state = 'investigate'; a.invField = flowFrom(b.x, b.y); a.timer = 2.5; a.meter = Math.max(a.meter, .6); a.hopT = 0;
+    return;
+  }
+}
+
 export function alertAgents(x, y) { for (const b of agents) summon(b, x, y); }
 const hopY = a => clips.alert_hop && a.hopT < clips.alert_hop.duration ? (sampleClip(clips.alert_hop, a.hopT)['body.y'] || 0) : 0; // clip "alert_hop"
 
@@ -176,12 +212,20 @@ export function updateAgentsAI(dt, player) {
   agents.forEach((a, idx) => {
     if (!a.path.length) return; a.moving = false; a.hopT += dt;
     const P = a.P;
+    if (a.state === 'ko') {                          // noqueado: en el piso hasta que despierta
+      if (G.frozen <= 0) a.koT -= dt;
+      a.meter = 0; a.aim = 0; a.burstLeft = 0;
+      if (a.koT > 0) return;
+      Object.assign(a, { state: 'search', timer: P.searchTime, meter: .5, lastX: a.x, lastY: a.y, lastField: null, hopT: 0, found: false });  // despierta y te busca
+    }
+    if (canTakedown(a, player)) { knockOut(a, player); return; }
     if (G.frozen <= 0) {
       const dx = player.x - a.x, dy = player.y - a.y, dist = Math.hypot(dx, dy), toP = Math.atan2(dy, dx);
       let rel = toP - a.ang; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
       const los = !hidden && rayDist(a.x, a.y, toP, dist, P.seeOver || 12) >= dist - 1.5;   // línea de vista (el vigía ve por encima de más cosas)
       const seen = los && ((dist < P.range && Math.abs(rel) < P.half) || (a.state === 'chase' && dist < 12));
       const heard = !hidden && dist < P.actionR;                                               // radio de acción, aunque esté de espaldas
+      if (a.state === 'patrol' || a.state === 'return' || a.state === 'search') spotBodies(a);       // ¿ve a un compañero noqueado?
       a.shotCD = Math.max(0, a.shotCD - dt);
       if (a.burstLeft > 0 && (a.burstT -= dt) <= 0) { turnTo(a, toP, 1); shoot(a); a.burstLeft--; a.burstT = P.burstGap; } // ráfaga (vigía)
       if (a.state === 'alert') {                     // salto de sorpresa, mira al jugador
@@ -277,8 +321,11 @@ export function animateAgents() {
       a.ch.root.position.set(a.x, Z + P.hover + Math.sin(t * 2.6 + i) * .9 + hopY(a), -a.y); a.ch.root.rotation.y = a.ang;
       a.ch.model.rotation.z += ((a.moving ? -.18 : 0) - a.ch.model.rotation.z) * .1; a.ch.model.rotation.x = Math.sin(t * 1.7 + i) * .06;
     } else {
-      pose(a.ch, a.x, a.y, a.ang, G.frozen > 0 ? 0 : G.t * ANIM_SPEED * (a.state === 'chase' || a.state === 'assist' ? 1.6 : 1), a.moving && G.frozen <= 0, false);
+      const ko = a.state === 'ko';
+      pose(a.ch, a.x, a.y, a.ang, G.frozen > 0 || ko ? 0 : G.t * ANIM_SPEED * (a.state === 'chase' || a.state === 'assist' ? 1.6 : 1), a.moving && G.frozen <= 0, false);
       a.ch.root.position.y += hopY(a);                                   // saltito al alarmarse o al recibir el llamado
+      a.fall += ((ko ? 1 : 0) - a.fall) * Math.min(1, dt * (ko ? 14 : 5));  // noqueado: cae de cara (rápido) · al despertar se levanta
+      a.ch.root.rotation.z = -Math.PI / 2 * a.fall; a.ch.root.position.y += a.fall * 1.2;
       if (a.state === 'chase' && P.shoots) overlayClip(a.ch, 'aim', G.t);          // apunta con el arma mientras persigue (clip "aim")
     }
     a.lasers.forEach((l, k) => {                                         // mira láser antes de disparar (el vigía: una por cañón)
@@ -288,6 +335,14 @@ export function animateAgents() {
       l.position.set(o.x, a.ch.drone ? a.ch.root.position.y + a.ch.tips[k][2] : Z + 9.5, -o.y); l.rotation.y = Math.atan2(player.y - o.y, player.x - o.x); l.scale.x = len;
       l.material.opacity = .5 + .5 * Math.sin(G.t * 40);                           // parpadea: "¡va a disparar!"
     });
+    const down = a.state === 'ko';
+    a.fan.visible = a.ring.visible = !down;                              // en el piso no ve nada
+    a.stars.visible = down;
+    if (down) {                                                          // estrellitas girando donde quedó la cabeza
+      const hx = a.x + Math.cos(a.ang) * 13, hy = a.y + Math.sin(a.ang) * 13;
+      a.stars.position.set(hx, Z + 4.5, -hy);
+      a.stars.children.forEach(s => { const t = s.userData.a + G.t * 4; s.position.set(Math.cos(t) * 2.6, Math.sin(t * 2) * .4, Math.sin(t) * 2.6); s.rotation.y = G.t * 6; });
+    }
     const arr = a.fan.geometry.attributes.position.array, pts = [];
     for (let i = 0; i <= NR; i++) { const an = a.ang - P.half + 2 * P.half * i / NR, d = rayDist(a.x, a.y, an, P.range, P.seeOver || 12); pts.push([a.x + Math.cos(an) * d, a.y + Math.sin(an) * d]); }
     let k = 0; const put = (x, y) => { arr[k++] = x; arr[k++] = Z + .25; arr[k++] = -y; };

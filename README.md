@@ -142,6 +142,8 @@ src/
     SensorTower.js          torre sensor (prop "tower", partes base/torre): se levanta y dispara láseres en cruz
     Crystal.js              cristal (fragmento de realidad) de cada piso
     Safe.js                 caja fuerte (prop "safe", partes base/puerta): quedarse pegado la abre y suelta el cristal
+    MainFrame.js            jefe (prop "MainFrame", partes cuerpo/patas): la cruz de patas gira y dispara láseres
+    RealityPortal.js        portal de realidad (prop "realityportal"): se echan los cristales al contenedor y con todos se enciende (final)
     Portal.js               portal del final: se abre con todos los cristales
   Animations/
     Clips.js                carga, interpola y mezcla los clips JSON

@@ -19,4 +19,7 @@ export function markDone(name, crystal, time) {
 export const unlocked = (prefix, n) => n <= 1 || !!(P.levels[prefix + (n - 1)] && P.levels[prefix + (n - 1)].done);
 // el primer piso sin terminar (para retomar donde quedaste)
 export function nextToPlay(prefix, count) { for (let n = 1; n <= count; n++) if (!(P.levels[prefix + n] && P.levels[prefix + n].done)) return prefix + n; return prefix + count; }
+// cristales que ya echaste al contenedor del portal de realidad (nunca más que los que juntaste)
+export const depositedCount = () => Math.min(P.deposited || 0, crystalCount());
+export function depositOne() { P.deposited = Math.min((P.deposited || 0) + 1, crystalCount()); save(); }
 export function resetProgress() { P = { levels: {} }; save(); }

@@ -87,7 +87,7 @@ const TABS = { level: 'Nivel', props: 'Props', agents: 'Agentes', cams: 'Segurid
 const TAB_OF = { floorAdd: 'level', floorOpen: 'level', floorDel: 'level', exit: 'level', callBtn: 'level', crystal: 'level', portal: 'level', entrance: 'level', player: 'level', place: 'props', route: 'agents', hide: 'hides', cam: 'cams', laser: 'cams', erase: 'erase' };
 const TAB_TOOL = { level: 'floorAdd', props: 'place', agents: 'route', hides: 'hide', cams: 'cam', erase: 'erase' }; // herramienta al abrir la pestaña
 // grupos del selector de props (los que no estén aquí aparecen en "Otros")
-const PROP_GROUPS = { Muebles: ['desk', 'cabinet', 'micro', 'copier', 'cooler'], 'Decoración': ['plant', 'plant_s', 'trash'], Paredes: ['panel', 'muro'], Seguridad: ['rack', 'tower', 'safe'] };
+const PROP_GROUPS = { Muebles: ['desk', 'cabinet', 'micro', 'copier', 'cooler'], 'Decoración': ['plant', 'plant_s', 'trash'], Paredes: ['panel', 'muro'], Seguridad: ['rack', 'tower', 'safe'], Jefes: ['MainFrame'], Final: ['realityportal'] };
 
 function propSelect() {
   const used = new Set(Object.values(PROP_GROUPS).flat());
