@@ -9,7 +9,8 @@ import { resetRacks, updateRacks } from '../Prefabs/ServerRack.js';
 import { resetLasers, updateLasers } from '../Prefabs/LaserGate.js';
 import { resetTowers, updateTowers } from '../Prefabs/SensorTower.js';
 import { resetSafes, updateSafes } from '../Prefabs/Safe.js';
-import { updateRealityPortals } from '../Prefabs/RealityPortal.js';
+import { updateRealityPortals, syncRealityPortals } from '../Prefabs/RealityPortal.js';
+import { resetProgress } from '../Data/Progress.js';
 import { resetMainFrames, updateMainFrames } from '../Prefabs/MainFrame.js';
 import { shake, kick, hitstop, slowmo, flash, popText, resetJuice } from '../FX/Juice.js';
 import { resetCrystal, updateCrystal } from '../Prefabs/Crystal.js';
@@ -90,4 +91,17 @@ export function initGameScene() {
   $('#stage').addEventListener('pointerdown', () => { if (G.mode === 'play' && G.asm >= 0) skipAssembly(); else if (G.mode === 'play' && G.intro > .3) finishIntro(); }); // un toque también la salta
   $('#testBtn')?.addEventListener('click', () => setMode('play'));
   $('#backBtn')?.addEventListener('click', () => setMode('edit'));
+  // solo en el editor (probando): borrar el progreso guardado y reiniciar el nivel. Pide un segundo clic para confirmar.
+  const rs = $('#resetSave'); let rsT = 0;
+  rs?.addEventListener('click', () => {
+    if (!rs.classList.contains('confirm')) {
+      rs.classList.add('confirm'); rs.textContent = '¿Seguro? clic otra vez';
+      clearTimeout(rsT); rsT = setTimeout(() => { rs.classList.remove('confirm'); rs.textContent = '⟲ Borrar datos'; }, 3000);
+      return;
+    }
+    clearTimeout(rsT); rs.classList.remove('confirm'); rs.textContent = '⟲ Borrar datos';
+    resetProgress(); syncRealityPortals(); setMode('play');                 // nivel desde cero, sin cristales ni pisos terminados
+    popText(player.x, player.y, 'SAVE DATA CLEARED', 'cyan');
+    rs.blur();
+  });
 }
