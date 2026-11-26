@@ -24,7 +24,7 @@ import { initCrystal, animateCrystal } from './Prefabs/Crystal.js';
 import { initPortal, animatePortal } from './Prefabs/Portal.js';
 import { initRealityPortals, animateRealityPortals } from './Prefabs/RealityPortal.js';
 import { initFloorSelect, openFloors, goToLevel } from './UI/FloorSelect.js';
-import { hasProgress, nextToPlay, crystalCount } from './Data/Progress.js';
+import { hasProgress, nextToPlay, crystalCount, setFloorCount } from './Data/Progress.js';
 import { countLevels, loadLevelNamed } from './Data/LevelIO.js';
 import { initBullets } from './Prefabs/Bullet.js';
 import { initHideSpots, animateHideSpots } from './Prefabs/HideSpot.js';
@@ -73,7 +73,8 @@ async function main() {
   loadStep(.7, 'LOADING FLOOR');
   // si ya jugaste antes (y la dirección no pide un piso), retoma en el primer piso que no terminaste
   let start = LEVEL_NAME; const pre = (LEVEL_NAME.match(/^(.*?)\d+$/) || [0, 'piso'])[1];
-  if (!EDITOR && !new URLSearchParams(location.search).has('nivel') && hasProgress()) start = nextToPlay(pre, await countLevels(pre + '1'));
+  const nFloors = await countLevels(pre + '1'); setFloorCount(nFloors);    // el portal pide un cristal por piso
+  if (!EDITOR && !new URLSearchParams(location.search).has('nivel') && hasProgress()) start = nextToPlay(pre, nFloors);
   G.level = start !== LEVEL_NAME ? await loadLevelNamed(start) : null;
   if (!G.level) { start = LEVEL_NAME; G.level = await loadLevel(); }
   G.levelName = start;
