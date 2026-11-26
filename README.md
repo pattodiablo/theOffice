@@ -85,6 +85,19 @@ Un prop nuevo aparece en la barra del editor. Para que tenga un nombre bonito, a
 
 ## Build para publicar
 
+### Poki
+
+```bash
+npm run poki
+```
+
+Genera `dist/` y `escape-oficina-poki.zip` (sin los niveles `prueba_*` ni `player_anterior.vox`). Ese zip se sube en
+Poki for Developers / Poki Inspector (https://inspector.poki.dev/). La integración del SDK está en `src/Core/Poki.js`:
+`init` al arrancar, `gameLoadingFinished` al terminar de cargar, `gameplayStart` con el primer movimiento, `gameplayStop`
+cuando te atrapan, sales por el ascensor o abres el menú, y `commercialBreak` antes de Retry, del siguiente piso o de elegir piso.
+Las fuentes van incluidas (paquetes @fontsource) porque Poki bloquea las peticiones externas.
+
+
 ```bash
 npm run build
 ```

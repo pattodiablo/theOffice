@@ -14,6 +14,7 @@ import { setAlarm, setGlitchFX } from '../FX/ScreenFX.js';
 import { loadLevelNamed, nextLevelName, levelNumber, countLevels, prefetchLevel } from '../Data/LevelIO.js';
 import { rebuild } from './Level.js';
 import { setMode } from './GameScene.js';
+import { pokiBreak } from '../Core/Poki.js';
 import { haptic } from '../FX/Juice.js';
 
 // Escena de salida: el jugador entra por la puerta, la oficina se funde a negro y aparece en un ascensor
@@ -158,6 +159,7 @@ export function resetExit() {
 // juega el piso elegido en el dial (en el editor se repite el mismo nivel, ya cargado)
 async function playLevel(name) {
   if (loading) return; loading = true;
+  await pokiBreak();                     // Poki: anuncio entre pisos (si toca)
   fade = 1; $('#fade').style.opacity = 1;
   const lvl = !EDITOR && name ? await loadLevelNamed(name) : null;
   if (lvl) { G.level = lvl; G.levelName = name; try { history.replaceState(null, '', `?nivel=${name}`); } catch (e) {} rebuild(); prefetchLevel(nextLevelName(name)); }

@@ -44,6 +44,11 @@ import { initGameScene, updateGame, setMode } from './Scenes/GameScene.js';
 import { initEditor, startEditor } from './Scenes/EditorScene.js';
 import { initElevator, initFloors, updateElevator, elevatorShown, renderElevator } from './Scenes/ElevatorScene.js';
 import { initCaught, updateCaught } from './Scenes/CaughtScene.js';
+import { pokiInit, pokiLoaded, pokiStop } from './Core/Poki.js';
+// fuentes incluidas en el build (Poki bloquea las peticiones externas, como Google Fonts)
+import '@fontsource/anton/400.css'; import '@fontsource/bangers/400.css';
+import '@fontsource/chakra-petch/600.css'; import '@fontsource/chakra-petch/700.css';
+import '@fontsource/inter/400.css'; import '@fontsource/inter/600.css';
 
 // Punto de entrada: carga los datos, crea los objetos de la escena y arranca el bucle.
 main();
@@ -61,7 +66,7 @@ function lazyLoad() {
 }
 
 async function main() {
-  loadStep(.1, 'LOADING OFFICE');
+  loadStep(.05, 'LOADING OFFICE'); await pokiInit();
   G.DATA = await (await fetch('data/office.json')).json();
   initPalette(G.DATA.colors); initMaterials(); initProps(G.DATA);
   loadStep(.4, 'LOADING PEOPLE'); await Promise.all([loadClips(), loadCharacterModels()]);
@@ -83,7 +88,7 @@ async function main() {
 
   loadStep(.9, 'BUILDING'); setAssemblyScene(scene, worldMesh); rebuild();
   if (EDITOR) startEditor(); else setMode('play');        // sin pantalla de título: el nivel arranca directo
-  startLoop(frame); loadStep(1, 'READY');
+  startLoop(frame); loadStep(1, 'READY'); pokiLoaded();
   requestAnimationFrame(() => requestAnimationFrame(hideLoader));
   lazyLoad();
 }
@@ -93,6 +98,7 @@ function frame(dt) {
   const real = dt; dt = gameDt(dt);                         // hitstop / cámara lenta (Juice): solo el juego, la UI sigue normal
   G.t += dt;
   if (G.mode === 'play') { if (G.asm >= 0) updateAssembly(dt, scene, worldMesh, player.ch.root); else if (G.intro >= 0) updateIntro(dt); else updateGame(dt); }
+  if (G.mode !== 'play') pokiStop();                       // atrapado, ascensor, menú, final: ya no está jugando
   animatePlayer(); animateBombs(dt);                       // bombas después del jugador: le levantan los brazos al cargarlas
   updateStartDesk(); updateBubble(cam, stage); updateExitDoor(dt); updateCodeRain(dt);
   updateParticles(dt); animateHideSpots(dt, player);

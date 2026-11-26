@@ -5,6 +5,7 @@ import { levelInfo, unlocked, crystalCount, hasCrystal } from '../Data/Progress.
 import { PORTAL } from '../Settings.js';
 import { tickSound } from '../Core/Audio.js';
 import { rebuild } from '../Scenes/Level.js';
+import { pokiBreak, pokiBusy } from '../Core/Poki.js';
 import { setMode } from '../Scenes/GameScene.js';
 
 // Selector de pisos tipo "dial": una columna de pisos a la izquierda que se mueve con ▲/▼, la rueda del mouse,
@@ -140,6 +141,7 @@ export function closeFloors() {
 
 // carga un piso y empieza a jugarlo
 export async function goToLevel(name) {
+  if (pokiBusy()) return; await pokiBreak();          // Poki: anuncio antes de volver a jugar
   const lvl = await loadLevelNamed(name); if (!lvl) return;
   G.level = lvl; G.levelName = name;
   try { history.replaceState(null, '', `?nivel=${name}`); } catch (e) {}

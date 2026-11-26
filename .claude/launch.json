@@ -4,8 +4,27 @@
     {
       "name": "dev",
       "runtimeExecutable": "/Users/x4/.local/node/bin/node",
-      "runtimeArgs": ["/Users/x4/Documents/Weveana/theOffice/node_modules/vite/bin/vite.js", "/Users/x4/Documents/Weveana/theOffice", "--port", "5173", "--strictPort"],
+      "runtimeArgs": [
+        "/Users/x4/Documents/Weveana/theOffice/node_modules/vite/bin/vite.js",
+        "/Users/x4/Documents/Weveana/theOffice",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
       "port": 5173
+    },
+    {
+      "name": "build",
+      "runtimeExecutable": "/Users/x4/.local/node/bin/node",
+      "runtimeArgs": [
+        "/Users/x4/Documents/Weveana/theOffice/node_modules/vite/bin/vite.js",
+        "preview",
+        "/Users/x4/Documents/Weveana/theOffice",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173
     }
   ]
 }

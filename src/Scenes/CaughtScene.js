@@ -6,6 +6,7 @@ import { caughtSound } from '../Core/Audio.js';
 import { shake, kick, hitstop, slowmo, flash, popText, haptic } from '../FX/Juice.js';
 import { setAlarm, setGlitchFX } from '../FX/ScreenFX.js';
 import { player } from '../Prefabs/Player.js';
+import { pokiBreak, pokiBusy } from '../Core/Poki.js';
 import { setMode } from './GameScene.js';
 
 // Te atraparon: sacudón de cámara, destello rojo, fundido a negro y un mensaje "existencial"
@@ -25,9 +26,10 @@ export function initCaught() {
   el = document.createElement('div'); el.id = 'dream';
   el.innerHTML = `<p class="dtext"></p><div class="dbtns"><button id="retryBtn" class="playbtn">Retry ↻</button>${EDITOR ? '<button id="dreamEdit">Volver al editor</button>' : ''}</div>`;
   document.body.append(el); textEl = el.querySelector('.dtext');
-  $('#retryBtn').addEventListener('click', () => setMode('play'));
+  const retry = async () => { if (pokiBusy()) return; await pokiBreak(); setMode('play'); };   // Poki: anuncio antes de volver a jugar
+  $('#retryBtn').addEventListener('click', retry);
   $('#dreamEdit')?.addEventListener('click', () => setMode('edit'));
-  addEventListener('keydown', e => { if (G.mode === 'caught' && retryShown && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); setMode('play'); } });
+  addEventListener('keydown', e => { if (G.mode === 'caught' && retryShown && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); retry(); } });
 }
 
 export function startCaught(agent) {

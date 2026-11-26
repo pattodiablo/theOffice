@@ -1,9 +1,12 @@
 // Sonidos sintetizados con Web Audio (sin archivos).
 let actx;
 // los navegadores arrancan el audio en pausa hasta que el jugador toca o aprieta algo
-const unlock = () => { try { actx ||= new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch (e) {} };
+const unlock = () => { if (muted) return; try { actx ||= new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch (e) {} };
 for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, unlock, { passive: true });
-function tone(fn) { try { actx ||= new (window.AudioContext || window.webkitAudioContext)(); fn(actx, actx.currentTime); } catch (e) {} }
+// silencio total (lo usa la pausa para anuncios de Poki)
+let muted = false;
+export function setMuted(m) { muted = m; try { if (actx) m ? actx.suspend() : actx.resume(); } catch (e) {} }
+function tone(fn) { if (muted) return; try { actx ||= new (window.AudioContext || window.webkitAudioContext)(); fn(actx, actx.currentTime); } catch (e) {} }
 
 export const ring = () => tone((a, t0) => { // timbre de teléfono (intro)
   for (let i = 0; i < 2; i++) for (const f of [440, 480]) {

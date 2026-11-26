@@ -7,9 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "datos": "node tools/exportar_datos.mjs"
+    "datos": "node tools/exportar_datos.mjs",
+    "poki": "vite build && cd dist && rm -f ../escape-oficina-poki.zip && zip -qr ../escape-oficina-poki.zip . -x 'levels/prueba_*' 'characters/player_anterior.vox' '*.DS_Store'"
   },
   "dependencies": {
+    "@fontsource/anton": "^5.3.0",
+    "@fontsource/bangers": "^5.3.0",
+    "@fontsource/chakra-petch": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
     "three": "0.160.0"
   },
   "devDependencies": {

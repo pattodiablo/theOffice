@@ -9,6 +9,7 @@ import { pose, poseClip } from '../Animations/CharacterPoses.js';
 import { free } from '../World/Grid.js';
 import { turnTo } from '../Core/MathUtils.js';
 import { keys, joy } from '../Core/Input.js';
+import { pokiPlay } from '../Core/Poki.js';
 
 // Jugador (el oficinista): movimiento y glitch.
 export const player = { ch: null, x: 0, y: 0, ang: Math.PI / 4, moving: false, stepT: 0, vx: 0, vy: 0 }; // vx, vy: velocidad (la usan los agentes rojos para adelantarse)
@@ -24,6 +25,7 @@ export function movePlayer(dt) {
   const mx = (ix - iy) * Math.SQRT1_2, my = (ix + iy) * Math.SQRT1_2;
   player.moving = il > .15;
   const ox = player.x, oy = player.y;
+  if (player.moving) pokiPlay();                                  // Poki: empieza a jugar con su primer movimiento
   if (!player.moving) { player.stepT = 0; player.vx *= .8; player.vy *= .8; return; }
   if ((player.stepT -= dt) <= 0) {                               // pasos
     player.stepT = STEP_TIME;
