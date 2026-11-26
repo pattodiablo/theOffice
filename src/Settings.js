@@ -3,8 +3,11 @@
 // ======================================================================
 
 // ---- Jugador ----
-export const ANIM_SPEED = 1.15;                          // velocidad de las animaciones de caminar (todos)
-export const PLAYER_SPEED = 29;                            // vóxeles por segundo
+// Ritmo general del juego: multiplica la velocidad del jugador, de los agentes (patrullar, perseguir, buscar)
+// y de sus animaciones de caminar. 1 = como antes · 1.25 = 25 % más rápido.
+export const GAME_PACE = 1.25;
+export const ANIM_SPEED = 1.15 * GAME_PACE;               // velocidad de las animaciones de caminar (todos)
+export const PLAYER_SPEED = 29 * GAME_PACE;               // vóxeles por segundo
 export const GLITCH_TIME = 2.5, GLITCH_COOLDOWN = 8;       // segundos que congela a los agentes · recarga
 
 // ---- Cámara ----
@@ -46,6 +49,7 @@ export const AGENT_TYPES = {
     hunchMin: 7, hunchMax: 12, hunchNoise: 14, hunchReach: 70, predict: .5, helpRadius: 50,
     drone: true, hover: 10, scale: 1.3, seeOver: 18 },
 };
+for (const t of Object.values(AGENT_TYPES)) for (const k of ['patrol', 'chase', 'search']) t[k] *= GAME_PACE;   // ritmo general
 //   burst: disparos seguidos por ráfaga (cada uno por sus dos cañones) · burstGap: segundos entre ellos · bulletSpeed: velocidad de sus balas
 //   vigia (dron): hover = altura a la que flota · scale = tamaño del modelo vigia*.vox · seeOver = ve por encima de lo más bajo
 //   que esto (los agentes: 12, así los cubículos los tapan; el vigía flota y solo lo tapan paneles, muros y paredes)
