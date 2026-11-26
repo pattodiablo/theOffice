@@ -6,7 +6,7 @@ import { PORTAL } from '../Settings.js';
 import { PROPS, rot } from '../Data/PropLibrary.js';
 import { listGeo } from '../Core/VoxelMesh.js';
 import { M } from '../Materials/Materials.js';
-import { crystalCount, depositedCount, depositOne, hasCrystal } from '../Data/Progress.js';
+import { crystalCount, depositedCount, depositOne, hasCrystal, crystalsNeeded } from '../Data/Progress.js';
 import { crystalSound } from '../Core/Audio.js';
 import { puff } from '../FX/Particles.js';
 import { shake, kick, flash, popText } from '../FX/Juice.js';
@@ -15,7 +15,7 @@ import { startEnding } from './Portal.js';
 // Portal de realidad (prop "realityportal", modelo assets/vox/props/realityportal.vox: partes "base" y "plataforma").
 // Pensado para el piso 1. Al acercarte al contenedor (el cilindro de vidrio de la derecha), los cristales que juntaste
 // salen volando de ti y caen adentro, uno por uno; el contenedor se va llenando de luz celeste.
-// Con PORTAL.need cristales adentro, el portal se enciende: la espiral gira brillante. Entrar = final del juego.
+// Con todos los cristales (crystalsNeeded) adentro, el portal se enciende: la espiral gira brillante. Entrar = final del juego.
 // Lo que va guardado: cuántos cristales echaste (Progress: depositedCount), así no hay que volver a echarlos.
 const HOLE = { x: 17, y: 10, z: 17.5, w: 14, h: 21 };          // abertura de la puerta (coordenadas del modelo sin rotar)
 const TANK = { x: 36.5, y: 10.5, z0: 3, z1: 14, r: 4.4 };       // vidrio del contenedor
@@ -68,14 +68,14 @@ export function syncRealityPortals() {
     const liquid = new THREE.Mesh(new THREE.CylinderGeometry(TANK.r - .4, TANK.r - .4, 1, 24).translate(0, .5, 0), new THREE.MeshBasicMaterial({ color: 0x3fc8ff, transparent: true, opacity: .45, depthWrite: false }));
     liquid.position.set(tank.x, Z + TANK.z0, -tank.y); liquid.renderOrder = 2;
     const gems = new THREE.Group(); gems.position.set(tank.x, Z + TANK.z0, -tank.y);
-    for (let i = 0; i < PORTAL.need; i++) { const g = new THREE.Mesh(flyGeo, flyMat); g.scale.setScalar(.55); g.userData = { a: i * 2.4, h: .8 + (i / PORTAL.need) * (th - 1.6), r: 1.2 + (i % 3) * .9 }; gems.add(g); }
+    for (let i = 0; i < crystalsNeeded(); i++) { const g = new THREE.Mesh(flyGeo, flyMat); g.scale.setScalar(.55); g.userData = { a: i * 2.4, h: .8 + (i / crystalsNeeded()) * (th - 1.6), r: 1.2 + (i % 3) * .9 }; gems.add(g); }
     group.add(glass, liquid, gems);
-    portals.push({ hole, tank, front: at(FRONT), spiral, uni, light, liquid, gems, fill: depositedCount() / PORTAL.need, th });
+    portals.push({ hole, tank, front: at(FRONT), spiral, uni, light, liquid, gems, fill: depositedCount() / crystalsNeeded(), th });
   }
   wasOnline = online(); droppedHere = 0; told = false; banner?.classList.remove('show');
 }
 
-export const online = () => depositedCount() >= PORTAL.need;
+export const online = () => depositedCount() >= crystalsNeeded();
 // cristales que tienes para echar: los de pisos terminados + el que recogiste en este piso (todavía no terminado)
 const carried = () => crystalCount() + (G.gotCrystal && !G.hadCrystal && !hasCrystal(G.levelName) ? 1 : 0);
 
@@ -102,7 +102,7 @@ export function animateRealityPortals(dt) {
   // terminaste de echar los cristales que traías y todavía faltan: el aviso (una vez por visita al piso)
   if (droppedHere && !flying.length && !on && !told && G.mode === 'play' && carried() - depositedCount() <= 0) {
     told = true;
-    banner.innerHTML = `NOW COLLECT ALL CRYSTALS TO WAKE UP<small>◆ ${depositedCount()} / ${PORTAL.need}</small>`;
+    banner.innerHTML = `NOW COLLECT ALL CRYSTALS TO WAKE UP<small>◆ ${depositedCount()} / ${crystalsNeeded()}</small>`;
     banner.classList.remove('show'); void banner.offsetWidth; banner.classList.add('show');
     clearTimeout(bannerT); bannerT = setTimeout(() => banner.classList.remove('show'), 4600);
   }
@@ -118,7 +118,7 @@ export function animateRealityPortals(dt) {
   for (const q of portals) {
     q.uni.uT.value += dt * (on ? .55 : .04); q.uni.uOn.value += ((on ? 1 : 0) - q.uni.uOn.value) * Math.min(1, dt * 2);
     q.light.intensity = q.uni.uOn.value * (600 + 150 * Math.sin(G.t * 3));
-    q.fill += (Math.min(1, n / PORTAL.need) - q.fill) * Math.min(1, dt * 3);
+    q.fill += (Math.min(1, n / crystalsNeeded()) - q.fill) * Math.min(1, dt * 3);
     q.liquid.scale.y = Math.max(.01, q.fill * q.th); q.liquid.material.opacity = .35 + .15 * Math.sin(G.t * 2.5) + (on ? .2 : 0);
     q.gems.children.forEach((g, i) => {
       g.visible = i < n; const u = g.userData, a = u.a + G.t * (on ? 1.6 : .5);
@@ -132,6 +132,6 @@ export function animateRealityPortals(dt) {
     const v = new THREE.Vector3(q.tank.x, Z + TANK.z1 + 9, -q.tank.y).project(cam);
     label.style.left = ((v.x + 1) / 2 * stage.clientWidth) + 'px'; label.style.top = ((1 - v.y) / 2 * stage.clientHeight) + 'px';
     const pend = carried() - n;
-    label.innerHTML = `◆ ${n}/${PORTAL.need}${pend > 0 ? `<small>+${pend} to drop in</small>` : ''}`;
+    label.innerHTML = `◆ ${n}/${crystalsNeeded()}${pend > 0 ? `<small>+${pend} to drop in</small>` : ''}`;
   }
 }

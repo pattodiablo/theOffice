@@ -1,7 +1,7 @@
 import { EDITOR, $ } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
 import { loadLevelNamed, nextLevelName, countLevels, prefetchLevel } from '../Data/LevelIO.js';
-import { levelInfo, unlocked, crystalCount, hasCrystal } from '../Data/Progress.js';
+import { levelInfo, unlocked, crystalCount, hasCrystal, crystalsNeeded } from '../Data/Progress.js';
 import { PORTAL } from '../Settings.js';
 import { tickSound } from '../Core/Audio.js';
 import { rebuild } from '../Scenes/Level.js';
@@ -124,7 +124,7 @@ export function initFloorSelect() {
   addEventListener('keydown', e => { if (!menuEl.hidden && e.code === 'Escape') closeFloors(); });
 }
 
-export const fragmentsText = () => `◆ ${crystalCount()} / ${PORTAL.need} reality fragments`;
+export const fragmentsText = () => `◆ ${crystalCount()} / ${crystalsNeeded()} reality fragments`;
 
 export async function openFloors() {
   if (EDITOR || !menuEl.hidden || G.mode === 'exit') return;
