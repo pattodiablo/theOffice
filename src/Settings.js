@@ -120,13 +120,13 @@ export const BEE = {
   windup: .7,                 // segundos de aviso antes de embestir (zumbido + línea roja en el piso)
   dashSpeed: 80,              // velocidad de la embestida (vóxeles por segundo)
   dashDist: 46,               // largo máximo de la embestida
-  hitR: 3.2,                  // qué tan cerca tiene que pasar para picarte
+  hitR: 4.5,                  // qué tan cerca tiene que pasar para picarte
   dazedTime: 1.3,             // segundos mareada después de embestir (o de chocar)
   cooldown: 1,                // segundos de calma al volver, antes de poder embestir de nuevo
   speed: 16,                  // velocidad normal (revolotear y volver)
   wander: 8,                  // radio en el que revolotea alrededor de su lugar
   flyH: 9,                    // altura de vuelo sobre el piso
-  scale: 1.2,                 // tamaño del modelo en el juego (1 = como en MagicaVoxel)
+  scale: .7,                  // tamaño del modelo en el juego (1 = como en MagicaVoxel)
 };
 // Noquear por la espalda (automático): tocar a un guardia por detrás lo deja en el piso unos segundos.
 // No funciona si ya te vio ("!") ni con el dron vigía (flota). Durante el glitch funciona aunque te mire.

@@ -95,8 +95,10 @@ export function updateBees(dt, p) {
       b.x -= Math.cos(b.ang) * dt * 3; b.y -= Math.sin(b.ang) * dt * 3;
       if (b.t >= BEE.windup) { b.state = 'dash'; b.t = 0; b.dx = Math.cos(b.ang); b.dy = Math.sin(b.ang); b.dist = 0; b.len = dashLen(b, b.ang); beeDashSound(); }
     } else if (b.state === 'dash') {                                   // ¡embestida!
-      const s = Math.min(dt * BEE.dashSpeed, b.len - b.dist); b.x += b.dx * s; b.y += b.dy * s; b.dist += s;
-      if (!G.hiddenKind && Math.hypot(p.x - b.x, p.y - b.y) < BEE.hitR) hit = true;
+      const s = Math.min(dt * BEE.dashSpeed, b.len - b.dist), ox = b.x, oy = b.y; b.x += b.dx * s; b.y += b.dy * s; b.dist += s;
+      // ¿te tocó en este tramo? (se mira todo el tramo recorrido, no solo el punto final: a poca velocidad de cuadros no se salta al jugador)
+      const k = Math.max(0, Math.min(1, ((p.x - ox) * b.dx + (p.y - oy) * b.dy) / (s || 1)));
+      if (!G.hiddenKind && Math.hypot(p.x - (ox + b.dx * s * k), p.y - (oy + b.dy * s * k)) < BEE.hitR) { hit = true; b.len = b.dist; }
       if (b.dist >= b.len - .01) {
         const wall = b.len < BEE.dashDist - .5;
         if (wall) { beeBonkSound(); puff(b.x + b.dx * 2, b.y + b.dy * 2); if (dp < 40) shake(.35); popText(b.x, b.y, 'BONK!', 'cyan'); }
