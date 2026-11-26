@@ -6,7 +6,7 @@ import { PORTAL } from '../Settings.js';
 import { PROPS, rot } from '../Data/PropLibrary.js';
 import { listGeo } from '../Core/VoxelMesh.js';
 import { M } from '../Materials/Materials.js';
-import { crystalCount, depositedCount, depositOne } from '../Data/Progress.js';
+import { crystalCount, depositedCount, depositOne, hasCrystal } from '../Data/Progress.js';
 import { crystalSound } from '../Core/Audio.js';
 import { puff } from '../FX/Particles.js';
 import { shake, kick, flash, popText } from '../FX/Juice.js';
@@ -20,7 +20,7 @@ import { startEnding } from './Portal.js';
 const HOLE = { x: 17, y: 10, z: 17.5, w: 14, h: 21 };          // abertura de la puerta (coordenadas del modelo sin rotar)
 const TANK = { x: 36.5, y: 10.5, z0: 3, z1: 14, r: 4.4 };       // vidrio del contenedor
 const FRONT = { x: 17, y: 5 };                                   // dónde hay que pararse para entrar
-let group, portals = [], label, flyGeo, flyMat, flying = [], cool = 0, wasOnline = false;
+let group, portals = [], label, banner, bannerT, flyGeo, flyMat, flying = [], cool = 0, wasOnline = false, droppedHere = 0, told = false;
 
 const SPIRAL_VS = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const SPIRAL_FS = `
@@ -41,6 +41,7 @@ export function initRealityPortals(scene) {
   flyGeo = new THREE.OctahedronGeometry(1.1).scale(1, 1.6, 1);
   flyMat = new THREE.MeshBasicMaterial({ color: 0x8feaff });
   label = document.createElement('div'); label.id = 'rpNum'; document.body.append(label);
+  banner = document.createElement('div'); banner.id = 'rpMsg'; document.body.append(banner);   // mensaje grande al echar cristales
 }
 
 // un punto del modelo en el prop rotado r × 90° (igual que rot() rota los vóxeles)
@@ -71,16 +72,18 @@ export function syncRealityPortals() {
     group.add(glass, liquid, gems);
     portals.push({ hole, tank, front: at(FRONT), spiral, uni, light, liquid, gems, fill: depositedCount() / PORTAL.need, th });
   }
-  wasOnline = online();
+  wasOnline = online(); droppedHere = 0; told = false; banner?.classList.remove('show');
 }
 
 export const online = () => depositedCount() >= PORTAL.need;
+// cristales que tienes para echar: los de pisos terminados + el que recogiste en este piso (todavía no terminado)
+const carried = () => crystalCount() + (G.gotCrystal && !G.hadCrystal && !hasCrystal(G.levelName) ? 1 : 0);
 
 // lógica (jugando): echar cristales al contenedor y entrar al portal encendido
 export function updateRealityPortals(dt, p) {
   cool = Math.max(0, cool - dt);
   for (const q of portals) {
-    const pending = crystalCount() - depositedCount() - flying.length;
+    const pending = carried() - depositedCount() - flying.length;
     if (pending > 0 && cool <= 0 && Math.hypot(p.x - q.tank.x, p.y - q.tank.y) < PORTAL.depositR) {   // lanza el siguiente cristal
       const m = new THREE.Mesh(flyGeo, flyMat); group.add(m);
       flying.push({ m, q, t: 0, from: { x: p.x, y: p.y, z: Z + 22 } }); cool = .32;
@@ -96,12 +99,19 @@ export function animateRealityPortals(dt) {
     const q = portals[0]; shake(1); kick(.12); flash('127,220,255', .45); if (q) popText(q.hole.x, q.hole.y, 'PORTAL ONLINE', 'cyan');
   }
   wasOnline = on;
+  // terminaste de echar los cristales que traías y todavía faltan: el aviso (una vez por visita al piso)
+  if (droppedHere && !flying.length && !on && !told && G.mode === 'play' && carried() - depositedCount() <= 0) {
+    told = true;
+    banner.innerHTML = `NOW COLLECT ALL CRYSTALS TO WAKE UP<small>◆ ${depositedCount()} / ${PORTAL.need}</small>`;
+    banner.classList.remove('show'); void banner.offsetWidth; banner.classList.add('show');
+    clearTimeout(bannerT); bannerT = setTimeout(() => banner.classList.remove('show'), 4600);
+  }
   for (let i = flying.length - 1; i >= 0; i--) {                 // cristales volando al contenedor
     const f = flying[i]; f.t += dt / .55; const k = Math.min(1, f.t), e = k * k * (3 - 2 * k), q = f.q;
     f.m.position.set(f.from.x + (q.tank.x - f.from.x) * e, f.from.z + (Z + TANK.z1 + 2 - f.from.z) * e + Math.sin(k * Math.PI) * 10, -(f.from.y + (q.tank.y - f.from.y) * e));
     f.m.rotation.y += dt * 12;
     if (k >= 1) {
-      group.remove(f.m); flying.splice(i, 1); depositOne(); crystalSound(); puff(q.tank.x, q.tank.y); kick(.03);   // el contador de arriba sube solo
+      group.remove(f.m); flying.splice(i, 1); depositOne(carried()); droppedHere++; crystalSound(); puff(q.tank.x, q.tank.y); kick(.03);   // el contador de arriba sube solo
     }
   }
   const n = depositedCount();
@@ -121,7 +131,7 @@ export function animateRealityPortals(dt) {
   if (show) {
     const v = new THREE.Vector3(q.tank.x, Z + TANK.z1 + 9, -q.tank.y).project(cam);
     label.style.left = ((v.x + 1) / 2 * stage.clientWidth) + 'px'; label.style.top = ((1 - v.y) / 2 * stage.clientHeight) + 'px';
-    const pend = crystalCount() - n;
+    const pend = carried() - n;
     label.innerHTML = `◆ ${n}/${PORTAL.need}${pend > 0 ? `<small>+${pend} to drop in</small>` : ''}`;
   }
 }
