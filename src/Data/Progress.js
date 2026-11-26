@@ -8,7 +8,8 @@ try { P = JSON.parse(localStorage.getItem(KEY)) || P; P.levels ||= {}; } catch (
 let floors = 0;
 export const setFloorCount = n => { floors = n; };
 export const crystalsNeeded = () => PORTAL.need || floors || 1;
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
+let testing = null;                                   // probando el final desde el editor: el progreso real guardado aparte
+const save = () => { if (testing) return; try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
 
 export const levelInfo = name => P.levels[name] || null;
 export const hasCrystal = name => !!(P.levels[name] && P.levels[name].crystal);
@@ -27,4 +28,13 @@ export function nextToPlay(prefix, count) { for (let n = 1; n <= count; n++) if 
 // cristales que ya echaste al contenedor del portal de realidad (nunca más que los que juntaste)
 export const depositedCount = () => Math.min(P.deposited || 0, crystalCount() + 1);   // +1: el cristal del piso que estás jugando se puede echar antes de terminarlo
 export function depositOne(max = crystalCount()) { P.deposited = Math.min((P.deposited || 0) + 1, max); save(); }
-export function resetProgress() { P = { levels: {} }; save(); }
+export function resetProgress() { stopEndingTest(); P = { levels: {} }; save(); }
+
+// editor › "Probar final": progreso de mentira con todos los cristales (sin echar al contenedor). No se guarda;
+// al volver al editor se recupera el progreso real.
+export function startEndingTest(prefix = 'piso') {
+  if (!testing) testing = P;
+  P = { levels: {}, deposited: 0 };
+  for (let n = 1; n <= crystalsNeeded(); n++) P.levels[prefix + n] = { done: true, crystal: true, best: null };
+}
+export function stopEndingTest() { if (testing) { P = testing; testing = null; } }

@@ -219,6 +219,7 @@ body.exiting .pop,body.caught .pop{display:none}
 #rpNum small{display:block;font-size:12px;color:#dff8ff;opacity:.85}
 /* editor (probando): botón para borrar el progreso guardado */
 #resetSave{font-size:14px;padding:6px 12px}
+#endTestBtn[hidden]{display:none}
 #resetSave.confirm{background:#5a1010;border-color:#ff4d4d;color:#ffdede}
 body:not(.play) #resetSave{display:none}
 /* portal de realidad: aviso grande al echar los cristales ("now collect all crystals…") */
