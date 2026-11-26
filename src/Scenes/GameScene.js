@@ -14,6 +14,8 @@ import { updateRealityPortals, syncRealityPortals } from '../Prefabs/RealityPort
 import { resetProgress, startEndingTest, stopEndingTest } from '../Data/Progress.js';
 import { resetMainFrames, updateMainFrames } from '../Prefabs/MainFrame.js';
 import { resetBees, updateBees } from '../Prefabs/Bee.js';
+import { resetGlitchFloor, updateGlitchFloor } from '../Prefabs/GlitchFloor.js';
+import { resetGates, updateGates } from '../Prefabs/SecurityGate.js';
 import { shake, kick, hitstop, slowmo, flash, popText, resetJuice } from '../FX/Juice.js';
 import { resetCrystal, updateCrystal } from '../Prefabs/Crystal.js';
 import { updatePortal } from '../Prefabs/Portal.js';
@@ -33,7 +35,7 @@ import { startCaught, resetCaught } from './CaughtScene.js';
 export function setMode(m) {
   G.mode = m; resize(); G.snapCam = true; document.body.classList.toggle('play', m !== 'edit'); hideScreen(); resetExit(); resetCaught(); clearBullets();
   if (EDITOR) { onModeChange(m); if (m === 'edit') { stopEndingTest(); syncRealityPortals(); } const eb = $('#endTestBtn'); if (eb) eb.hidden = !hasRealityPortal(); }
-  resetAgents(); resetCams(); resetRacks(); resetLasers(); resetTowers(); resetSafes(); resetBombs(); resetMainFrames(); resetBees(); resetCrystal(); Object.assign(player, { x: G.seat.x, y: G.seat.y, ang: Math.PI / 2, vx: 0, vy: 0 });
+  resetAgents(); resetCams(); resetRacks(); resetLasers(); resetTowers(); resetSafes(); resetBombs(); resetMainFrames(); resetBees(); resetGlitchFloor(); resetGates(); resetCrystal(); Object.assign(player, { x: G.seat.x, y: G.seat.y, ang: Math.PI / 2, vx: 0, vy: 0 });
   if (G.entOk && m === 'play') { const [x, y] = G.ENT.point(5.5, .5); Object.assign(player, { x, y, ang: G.ENT.ang }); } // con entrada: espera detrás de las puertas
   resetIntro(m === 'play');
   Object.assign(G, { time: 0, frozen: 0, cool: 0, maxSeen: 0, alerts: 0, doorOpen: 0, doorWant: false, elev: 'idle', elevT: 0, usedGlitch: false, revived: false, grace: 0, hiddenKind: null, hideT: 0, popT: 1 }); resetHideSpots();
@@ -70,7 +72,8 @@ export function updateGame(dt) {
   setTime(G.time);
 
   const shotBy = G.frozen > 0 ? null : updateBullets(dt, player);  // las balas también se congelan con el glitch
-  const zapped = updateLasers(dt, player) | updateTowers(dt, player) | updateMainFrames(dt, player) | updateBees(dt, player);  // láseres y torres disparando: tocarlos mata
+  updateGates(dt, player);
+  const zapped = updateLasers(dt, player) | updateTowers(dt, player) | updateMainFrames(dt, player) | updateBees(dt, player) | updateGlitchFloor(dt, player);  // láseres y torres disparando: tocarlos mata
   if ((caughtBy || shotBy || zapped) && G.grace <= 0) startCaught(caughtBy || shotBy || null);          // sacudón, fundido y mensaje
   else if (crossedExit(player)) startExit();           // cruzó la puerta: escena del ascensor
   updateCrystal(dt, player); updatePortal(dt, player); updateRealityPortals(dt, player);  // fragmento de realidad · portal del final
