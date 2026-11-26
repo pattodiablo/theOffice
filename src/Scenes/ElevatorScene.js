@@ -14,6 +14,7 @@ import { setAlarm, setGlitchFX } from '../FX/ScreenFX.js';
 import { loadLevelNamed, nextLevelName, levelNumber, countLevels, prefetchLevel } from '../Data/LevelIO.js';
 import { rebuild } from './Level.js';
 import { setMode } from './GameScene.js';
+import { haptic } from '../FX/Juice.js';
 
 // Escena de salida: el jugador entra por la puerta, la oficina se funde a negro y aparece en un ascensor
 // visto con la misma cámara isométrica del nivel. El ascensor BAJA UN PISO: cada nivel es un piso del edificio
@@ -137,6 +138,7 @@ export async function initFloors() { levelCount = EDITOR ? 1 : await countLevels
 // ---------- control ----------
 export function startExit() {
   if (!elevScene) initElevator();                       // por si todavía no se preparó en segundo plano
+  haptic([25, 60, 25]);                                  // "¡lo lograste!" al entrar al ascensor
   let i; do { i = Math.random() * WAKE_MESSAGES.length | 0; } while (WAKE_MESSAGES.length > 1 && i === lastMsg);
   lastMsg = i; msg = WAKE_MESSAGES[i]; shownChars = -1; msgEl.textContent = ''; done = false;
   if (!EDITOR) markDone(G.levelName, !!G.gotCrystal, G.time);             // piso terminado (y su cristal, si lo llevas)

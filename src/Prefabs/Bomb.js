@@ -6,7 +6,7 @@ import { BOMB } from '../Settings.js';
 import { rayDist } from '../World/Grid.js';
 import { clips, sampleClip, applyPose, overlayClip } from '../Animations/Clips.js';
 import { bombFallSound, bombLandSound, bombLiftSound, bombBoomSound } from '../Core/Audio.js';
-import { shake, kick, hitstop, flash, popText } from '../FX/Juice.js';
+import { shake, kick, hitstop, flash, popText, haptic } from '../FX/Juice.js';
 import { puff } from '../FX/Particles.js';
 import { glowTex } from '../FX/GlowTex.js';
 import { player } from './Player.js';
@@ -117,7 +117,7 @@ function throwTarget() {
 function explode(b) {
   const x = b.bx, y = b.by; b.st = 'gone'; b.t = BOMB.respawn; b.boomT = 0; b.boomX = x; b.boomY = y;
   bombBoomSound(); puff(x, y); puff(x + 2, y - 1); puff(x - 2, y + 1);
-  shake(1.1); kick(.12); hitstop(.07); flash('170,230,255', .35);
+  shake(1.1); kick(.12); hitstop(.07); flash('170,230,255', .35); haptic([40, 30, 70]);   // explosión
   let n = 0, boss = false;
   for (const a of agents) if (a.path.length && Math.hypot(a.x - x, a.y - y) < BOMB.blastR) { stunAgent(a, BOMB.stunTime, x, y); n++; }
   for (const e of beeTargets()) if (Math.hypot(e.x - x, e.y - y) < BOMB.blastR) { stunBee(e, BOMB.stunTime); n++; }

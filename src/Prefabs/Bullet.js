@@ -4,7 +4,7 @@ import { G } from '../Core/Game.js';
 import { BULLET_SPEED, BULLET_RANGE, JUICE } from '../Settings.js';
 import { hAt } from '../World/Grid.js';
 import { shotSound } from '../Core/Audio.js';
-import { slowmo, kick, popText } from '../FX/Juice.js';
+import { slowmo, kick, popText, haptic } from '../FX/Juice.js';
 
 // Balas de los agentes rojos: viajan en línea recta a la altura del pecho.
 // Los escritorios no las frenan (son bajos); los paneles, muros y paredes sí. Camuflado no te dan.
@@ -51,7 +51,7 @@ export function updateBullets(dt, p) {
 // "¡casi!": cámara lenta cortita, golpe de zoom y texto
 function nearMiss(p) {
   if (nearCool > 0 || G.mode !== 'play') return; nearCool = 1.2;
-  slowmo(.3, .4); kick(.05); popText(p.x, p.y, 'CLOSE CALL!', 'red');
+  slowmo(.3, .4); kick(.05); haptic(15); popText(p.x, p.y, 'CLOSE CALL!', 'red');
 }
 
 export function clearBullets() { for (const b of bullets) scene.remove(b.m); bullets.length = 0; }
