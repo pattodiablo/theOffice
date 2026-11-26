@@ -5,9 +5,11 @@ import { MAINFRAME as B, LASER, SEMA } from '../Settings.js';
 import { PROPS, rot } from '../Data/PropLibrary.js';
 import { listGeo } from '../Core/VoxelMesh.js';
 import { M } from '../Materials/Materials.js';
-import { hAt } from '../World/Grid.js';
+import { hAt, free } from '../World/Grid.js';
 import { zapSound, towerRiseSound } from '../Core/Audio.js';
-import { shake } from '../FX/Juice.js';
+import { shake, kick, hitstop, flash, popText } from '../FX/Juice.js';
+import { puff } from '../FX/Particles.js';
+import { spawnBomb, tempBombsActive } from './Bomb.js';
 
 // Main Frame: el jefe (prop "MainFrame", modelo assets/vox/props/MainFrame.vox con partes "cuerpo" y "patas").
 // El cuerpo va pegado al escenario; la cruz de patas del piso GIRA alrededor del centro y, cuando el jugador entra
@@ -60,11 +62,37 @@ export function syncMainFrames() {
       }
       return { x: p.x + x, y: p.y + y, dx, dy, segs, ph: i * 1.7, phase: 0, amp: 2.5, sp: 1.1 };
     });
-    bosses.push({ x: p.x + cx, y: p.y + cy, tipR, pivot, beams, ring, mat, cables, ang: 0, ang: 0, state: 'idle', t: 0 });
+    bosses.push({ x: p.x + cx, y: p.y + cy, tipR, pivot, beams, ring, mat, cables, ang: 0, state: 'idle', t: 0 });
   }
   resetMainFrames();
 }
-export function resetMainFrames() { for (const b of bosses) Object.assign(b, { state: 'idle', t: 0, spinV: B.spinIdle }); }   // el ángulo sigue donde estaba (sin salto al reintentar)
+export function resetMainFrames() {   // el ángulo sigue donde estaba (sin salto al reintentar)
+  G.bossDown = false;
+  for (const b of bosses) Object.assign(b, { state: 'idle', t: 0, spinV: B.spinIdle, hp: B.hp, dead: false, stunT: 0, bombT: B.bombFirst, sparkT: 0 });
+}
+
+// ---------- pelea con bombas ----------
+export const bossTargets = () => bosses.filter(b => !b.dead);       // a quién le puede lanzar una bomba el jugador
+export function hitBoss(b) {                                         // le explotó una bomba encima
+  if (b.dead) return;
+  b.hp--; hitstop(.1); shake(1.3); kick(.14); puff(b.x, b.y); puff(b.x + 3, b.y - 2);
+  if (b.hp <= 0) {                                                   // ¡derrotado!
+    b.dead = true; b.state = 'down'; b.t = 0; G.bossDown = true;
+    flash('255,255,255', .6); popText(b.x, b.y, 'MAIN FRAME DOWN!', 'cyan');
+  } else {
+    b.state = 'stun'; b.t = 0; b.stunT = B.stunTime; flash('255,80,60', .3);
+    popText(b.x, b.y, `HIT! ${b.hp} LEFT`, 'red');
+  }
+}
+// busca un lugar libre en el piso, a cierta distancia del jefe, para que caiga una bomba
+function bombSpot(b) {
+  for (let i = 0; i < 30; i++) {
+    const a = Math.random() * Math.PI * 2, d = B.bombMin + Math.random() * (B.bombMax - B.bombMin);
+    const x = b.x + Math.cos(a) * d, y = b.y + Math.sin(a) * d;
+    if (free(x, y, 4)) return [x, y];
+  }
+  return null;
+}
 
 // hasta dónde llega un haz que sale del centro en el ángulo a (se corta en paredes y muebles altos)
 function reach(b, a) {
@@ -81,14 +109,20 @@ const segDist = (px, py, ax, ay, bx, by) => { const vx = bx - ax, vy = by - ay, 
 export function updateMainFrames(dt, p) {
   let hit = false;
   for (const b of bosses) {
+    if (b.dead) { b.spinV += (0 - b.spinV) * Math.min(1, dt * 1.5); b.ang += dt * b.spinV; continue; }   // derrotado: se apaga y deja de girar
     if (G.frozen > 0) continue;                                       // el glitch lo congela
     const near = Math.hypot(p.x - b.x, p.y - b.y) < B.wake;
     b.t += dt;
-    if (b.state === 'idle' && near) { b.state = 'charge'; b.t = 0; towerRiseSound(); }
+    if (b.state !== 'idle' && (b.bombT -= dt) <= 0) {                 // durante la pelea le caen bombas cerca
+      b.bombT = B.bombEvery;
+      if (!tempBombsActive()) { const s = bombSpot(b); if (s) spawnBomb(s[0], s[1]); }
+    }
+    if (b.state === 'stun') { if ((b.stunT -= dt) <= 0) { b.state = 'rest'; b.t = 0; } }
+    else if (b.state === 'idle' && near) { b.state = 'charge'; b.t = 0; towerRiseSound(); }
     else if (b.state === 'charge' && b.t >= B.chargeTime) { b.state = 'fire'; b.t = 0; zapSound(.8); shake(.5); }
     else if (b.state === 'fire' && b.t >= B.fireTime) { b.state = 'rest'; b.t = 0; }
     else if (b.state === 'rest' && b.t >= B.restTime) { b.state = near ? 'charge' : 'idle'; b.t = 0; }
-    const goal = b.state === 'fire' ? B.spinFire : b.state === 'idle' ? B.spinIdle : B.spin;
+    const goal = b.state === 'fire' ? B.spinFire : b.state === 'idle' ? B.spinIdle : b.state === 'stun' ? .08 : B.spin;
     b.spinV += (goal - b.spinV) * Math.min(1, dt * 2.5);              // acelera y frena suave (sin tirones al cambiar de fase)
     b.ang += dt * b.spinV;
     for (let k = 0; k < 4; k++) {                                     // largo de cada haz y si te toca
@@ -103,7 +137,9 @@ export function updateMainFrames(dt, p) {
 export function animateMainFrames(dt) {
   const play = G.mode === 'play' || G.mode === 'over' || G.mode === 'caught';
   for (const b of bosses) {
-    if (!play) { b.state = 'idle'; b.spinV = B.spinIdle; b.ang += dt * B.spinIdle; }
+    if (!play) { b.state = 'idle'; b.dead = false; b.spinV = B.spinIdle; b.ang += dt * B.spinIdle; }
+    const stun = b.state === 'stun', down = b.state === 'down';
+    if (stun && (b.sparkT -= dt) <= 0) { b.sparkT = .25 + Math.random() * .3; puff(b.x + (Math.random() - .5) * 12, b.y + (Math.random() - .5) * 12); }   // chispas
     b.pivot.rotation.y = b.ang;                                       // (en el juego el ángulo crece hacia +y, que en Three es -z: mismo sentido)
     if (b.mat.emissive) b.mat.emissive.setRGB(b.state === 'fire' ? .55 + .25 * Math.sin(G.t * 30) : b.state === 'charge' ? .25 * (Math.floor(G.t * 14) % 2) : 0, 0, 0);   // patas al rojo vivo
     const fire = b.state === 'fire', warn = b.state === 'charge', blink = Math.floor(G.t * 14) % 2;
@@ -111,13 +147,13 @@ export function animateMainFrames(dt) {
       be.m.visible = play && (fire || (warn && blink)) && be.len > .5;
       be.m.material = fire ? beamMat : warnMat;
       be.m.scale.set(Math.max(.01, be.len), fire ? 1 + Math.sin(G.t * 45) * .2 : .6, fire ? 1 + Math.sin(G.t * 45) * .2 : .6);
-      be.led.visible = !warn || blink; be.led.scale.setScalar(fire ? 1.3 : 1);
+      be.led.visible = !down && (stun ? Math.random() > .5 : !warn || blink); be.led.scale.setScalar(fire ? 1.3 : 1);   // aturdido: parpadeo de falla · derrotado: apagado
     }
-    b.ring.material.color.setHex(fire ? SEMA.red : warn || b.state === 'rest' ? SEMA.yellow : SEMA.green);
-    b.ring.material.opacity = fire ? .45 : .22 + .08 * Math.sin(G.t * 4);
+    b.ring.material.color.setHex(fire ? SEMA.red : stun ? 0x4db8ff : warn || b.state === 'rest' ? SEMA.yellow : SEMA.green);
+    b.ring.material.opacity = down ? 0 : fire ? .45 : .22 + .08 * Math.sin(G.t * 4);
     for (const c of b.cables) {                                       // cables: se abren hacia el techo y se mecen (más en el medio)
       // la fase avanza a la velocidad del momento (no G.t × velocidad: eso hacía saltar los cables al cambiar de ritmo)
-      c.amp += ((fire ? 4 : 2.5) - c.amp) * Math.min(1, dt * 2); c.sp += ((fire ? 3 : 1.1) - c.sp) * Math.min(1, dt * 2);
+      c.amp += ((fire ? 4 : stun ? 5 : down ? .5 : 2.5) - c.amp) * Math.min(1, dt * 2); c.sp += ((fire ? 3 : stun ? 5 : down ? .4 : 1.1) - c.sp) * Math.min(1, dt * 2);
       c.phase = (c.phase + dt * c.sp) % (Math.PI * 2);
       const n = c.segs.length, amp = c.amp;
       const pt = (j, out) => { const k = j / n, sw = Math.sin(k * Math.PI) * amp * Math.sin(c.phase + c.ph + k * 2.5);

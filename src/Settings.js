@@ -102,6 +102,12 @@ export const MAINFRAME = {
   beamY: 1.6,                 // altura del haz sobre el piso
   hitR: 1.3,                  // qué tan cerca del haz hay que pasar para que te toque
   hubR: 4,                    // desde dónde queman las patas al disparar (radio del centro, que es seguro)
+  // pelea: durante la batalla le caen bombas cerca; si le lanzas una (radio BOMB.throwR), recibe un golpe
+  hp: 3,                      // golpes de bomba para derrotarlo
+  stunTime: 3.5,              // segundos aturdido después de cada golpe (no dispara)
+  bombFirst: 3,               // segundos desde que despierta hasta la primera bomba
+  bombEvery: 7,               // cada cuántos segundos cae otra (si no hay una en juego)
+  bombMin: 16, bombMax: 40,   // a qué distancia de su centro caen (vóxeles)
 };
 // Noquear por la espalda (automático): tocar a un guardia por detrás lo deja en el piso unos segundos.
 // No funciona si ya te vio ("!") ni con el dron vigía (flota). Durante el glitch funciona aunque te mire.

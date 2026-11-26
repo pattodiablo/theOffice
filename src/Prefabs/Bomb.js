@@ -11,6 +11,7 @@ import { puff } from '../FX/Particles.js';
 import { glowTex } from '../FX/GlowTex.js';
 import { player } from './Player.js';
 import { agents, stunAgent } from './Agent.js';
+import { bossTargets, hitBoss } from './MainFrame.js';
 
 // Bomba aturdidora (level.bombs = [{ x, y }], se pone en el editor › Seguridad › Bomba). Ajustes en BOMB (Settings.js).
 // Ciclo de cada punto:  wait → warn (marca roja en el piso) → fall (cae del techo) → ground (se puede recoger)
@@ -55,7 +56,11 @@ export function initBombs(scene) {
 export function syncBombs() {
   for (const b of bombs) b.bar.remove();
   group.clear(); bombs = []; held = null; G.carrying = false;
-  for (const p of G.level.bombs || []) {
+  for (const p of G.level.bombs || []) makeBomb(p);
+  resetBombs();
+}
+function makeBomb(p) {
+  {
     const { root, eye } = makeModel();
     const ring = new THREE.Mesh(new THREE.RingGeometry(BOMB.pickR - .7, BOMB.pickR, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffcc00, transparent: true, depthWrite: false }));
     const warn = new THREE.Mesh(new THREE.RingGeometry(3.2, 4.2, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xff3a2a, transparent: true, depthWrite: false }));
@@ -65,19 +70,37 @@ export function syncBombs() {
     for (const m of [ring, warn, shadow, wave]) m.renderOrder = 2;
     const bar = document.createElement('div'); bar.className = 'hidebar use'; bar.innerHTML = '<i></i>'; document.body.append(bar);
     group.add(root, ring, warn, shadow, wave, blast);
-    bombs.push({ sx: p.x, sy: p.y, x: p.x, y: p.y, root, eye, ring, warn, shadow, wave, blast, bar });
+    const b = { sx: p.x, sy: p.y, x: p.x, y: p.y, root, eye, ring, warn, shadow, wave, blast, bar };
+    bombs.push(b); return b;
   }
-  resetBombs();
+}
+
+// bomba "de una vez" (la usa el jefe Main Frame: le caen bombas durante la pelea). Cae en (x, y) y no vuelve.
+export function spawnBomb(x, y) {
+  const b = makeBomb({ x, y });
+  Object.assign(b, { temp: true, st: 'warn', t: 0, prog: 0, bx: x, by: y, boomT: -1 }); bombFallSound();
+  return b;
+}
+// cuántas bombas "de una vez" siguen en juego (cayendo, en el piso, cargada o volando)
+export const allBombs = () => bombs;                     // (para pruebas y para el HUD)
+export const tempBombsActive = () => bombs.filter(b => b.temp && b.st !== 'gone').length;
+function dropTemp() {                                     // al reintentar: las bombas del jefe desaparecen
+  for (const b of bombs.filter(b => b.temp)) { group.remove(b.root, b.ring, b.warn, b.shadow, b.wave, b.blast); b.bar.remove(); }
+  bombs = bombs.filter(b => !b.temp);
 }
 
 export function resetBombs() {
-  held = null; throwT = -1; G.carrying = false;
+  dropTemp(); held = null; throwT = -1; G.carrying = false;
   bombs.forEach((b, i) => Object.assign(b, { st: 'wait', t: BOMB.dropDelay + i * .35, prog: 0, x: b.sx, y: b.sy, bx: b.sx, by: b.sy, boomT: -1 }));
 }
 
 // el agente más cercano que se puede aturdir y que el jugador ve dentro del radio de lanzamiento
 function throwTarget() {
   let best = null, bd = BOMB.throwR;
+  for (const m of bossTargets()) {                        // el jefe: su cuerpo tapa el rayo, por eso se mira hasta su borde
+    const d = Math.hypot(m.x - player.x, m.y - player.y);
+    if (d < bd && rayDist(player.x, player.y, Math.atan2(m.y - player.y, m.x - player.x), d, 12) >= d - 10) { bd = d; best = m; }
+  }
   for (const a of agents) {
     if (!a.path.length || a.state === 'ko') continue;
     const d = Math.hypot(a.x - player.x, a.y - player.y);
@@ -90,15 +113,16 @@ function explode(b) {
   const x = b.bx, y = b.by; b.st = 'gone'; b.t = BOMB.respawn; b.boomT = 0; b.boomX = x; b.boomY = y;
   bombBoomSound(); puff(x, y); puff(x + 2, y - 1); puff(x - 2, y + 1);
   shake(1.1); kick(.12); hitstop(.07); flash('170,230,255', .35);
-  let n = 0;
+  let n = 0, boss = false;
   for (const a of agents) if (a.path.length && Math.hypot(a.x - x, a.y - y) < BOMB.blastR) { stunAgent(a, BOMB.stunTime, x, y); n++; }
-  popText(x, y, n ? (n > 1 ? `${n} STUNNED!` : 'STUNNED!') : 'MISSED!', n ? 'cyan' : 'red');
+  for (const m of bossTargets()) if (Math.hypot(m.x - x, m.y - y) < BOMB.blastR + 6) { hitBoss(m); boss = true; }   // +6: el cuerpo del jefe es grande
+  if (!boss) popText(x, y, n ? (n > 1 ? `${n} STUNNED!` : 'STUNNED!') : 'MISSED!', n ? 'cyan' : 'red');
 }
 
 // lógica (solo jugando)
 export function updateBombs(dt, p) {
   for (const b of bombs) {
-    if (b.st === 'wait' || b.st === 'gone') { if ((b.st === 'wait' || BOMB.respawn > 0) && (b.t -= dt) <= 0) { b.st = 'warn'; b.t = 0; b.x = b.sx; b.y = b.sy; bombFallSound(); } }
+    if (b.st === 'wait' || b.st === 'gone') { if ((b.st === 'wait' || (BOMB.respawn > 0 && !b.temp)) && (b.t -= dt) <= 0) { b.st = 'warn'; b.t = 0; b.x = b.sx; b.y = b.sy; bombFallSound(); } }
     else if (b.st === 'warn') { if ((b.t += dt) >= BOMB.warnTime) { b.st = 'fall'; b.t = 0; } }
     else if (b.st === 'fall') {
       if ((b.t += dt) >= BOMB.dropTime) { b.st = 'ground'; b.t = 0; b.prog = 0; bombLandSound(); puff(b.x, b.y); shake(.35); }
