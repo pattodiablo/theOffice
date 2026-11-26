@@ -3,11 +3,11 @@ import { Z, EDITOR, $ } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
 import { PORTAL, ENDING_MESSAGES } from '../Settings.js';
 import { cam, stage } from '../Core/Engine.js';
-import { crystalCount } from '../Data/Progress.js';
+import { crystalCount, crystalsNeeded } from '../Data/Progress.js';
 import { portalSound } from '../Core/Audio.js';
 
 // Portal (level.portal = { x, y }, editor › Nivel › Portal): la salida de la Matrix, pensado para el nivel 21.
-// Se abre solo si juntaste PORTAL.need cristales (en el editor siempre está abierto, para probarlo).
+// Se abre solo si juntaste todos los cristales (crystalsNeeded) (en el editor siempre está abierto, para probarlo).
 // Cerrado: aro gris apagado con el contador "◆ 12/20". Abierto: aro celeste girando; al entrar, final del juego.
 let group, ring, disc, inner, light, label, endEl, et = -1, msg = '', onEnd = null;
 
@@ -28,7 +28,7 @@ export function initPortal(scene, { restart }) {
   $('#endAgain').addEventListener('click', () => { endEl.classList.remove('show', 'done'); et = -1; onEnd && onEnd(); });
 }
 
-export const portalOpen = () => EDITOR || crystalCount() >= PORTAL.need;
+export const portalOpen = () => EDITOR || crystalCount() >= crystalsNeeded();
 export function syncPortal() { group.visible = !!G.level.portal; }
 
 // lógica (jugando): entrar al portal abierto termina el juego
@@ -57,7 +57,7 @@ export function animatePortal(dt) {
     if (label.style.display === 'block') {
       const v = new THREE.Vector3(q.x, Z + 19, -q.y).project(cam);
       label.style.left = ((v.x + 1) / 2 * stage.clientWidth) + 'px'; label.style.top = ((1 - v.y) / 2 * stage.clientHeight) + 'px';
-      label.textContent = `◆ ${crystalCount()}/${PORTAL.need}`;
+      label.textContent = `◆ ${crystalCount()}/${crystalsNeeded()}`;
     }
   }
   // final: la pantalla se vuelve blanca y se escribe el mensaje

@@ -1,8 +1,13 @@
+import { PORTAL } from '../Settings.js';
 // Progreso del jugador (se guarda en el navegador): pisos terminados, mejor tiempo y cristales recogidos.
 // Un cristal cuenta solo cuando terminas el piso con él (si te atrapan, vuelve a estar en su lugar).
 const KEY = 'escape-oficina-progreso';
 let P = { levels: {} };
 try { P = JSON.parse(localStorage.getItem(KEY)) || P; P.levels ||= {}; } catch (e) {}
+// cuántos cristales pide el portal: PORTAL.need, o si es 0, uno por cada piso que exista (main.js los cuenta al cargar)
+let floors = 0;
+export const setFloorCount = n => { floors = n; };
+export const crystalsNeeded = () => PORTAL.need || floors || 1;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
 
 export const levelInfo = name => P.levels[name] || null;
