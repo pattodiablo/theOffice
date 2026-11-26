@@ -144,6 +144,7 @@ src/
     Safe.js                 caja fuerte (prop "safe", partes base/puerta): quedarse pegado la abre y suelta el cristal
     MainFrame.js            jefe (prop "MainFrame", partes cuerpo/patas): la cruz de patas gira y dispara láseres
     RealityPortal.js        portal de realidad (prop "realityportal"): se echan los cristales al contenedor y con todos se enciende (final)
+    Bee.js                  abeja robot (prop "bee", partes abeja/alaL/alaR): te ve, avisa con una línea roja y te embiste
     Portal.js               portal del final: se abre con todos los cristales
   Animations/
     Clips.js                carga, interpola y mezcla los clips JSON

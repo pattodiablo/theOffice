@@ -19,6 +19,7 @@ import { initTowers, animateTowers } from './Prefabs/SensorTower.js';
 import { initSafes, animateSafes } from './Prefabs/Safe.js';
 import { initBombs, animateBombs } from './Prefabs/Bomb.js';
 import { initMainFrames, animateMainFrames } from './Prefabs/MainFrame.js';
+import { initBees, animateBees } from './Prefabs/Bee.js';
 import { initCrystal, animateCrystal } from './Prefabs/Crystal.js';
 import { initPortal, animatePortal } from './Prefabs/Portal.js';
 import { initRealityPortals, animateRealityPortals } from './Prefabs/RealityPortal.js';
@@ -75,7 +76,7 @@ async function main() {
 
   initCodeRain(); initScreenFX(); initEngine();
   initWorldMesh(scene); initParticles(scene); initStartDesk(scene); initPlayer(scene);
-  initAgents(scene); initCams(scene); initRacks(scene); initLasers(scene); initTowers(scene); initSafes(scene); initBombs(scene); initMainFrames(scene); initCrystal(scene); initJuice();
+  initAgents(scene); initCams(scene); initRacks(scene); initLasers(scene); initTowers(scene); initSafes(scene); initBombs(scene); initMainFrames(scene); initBees(scene); initCrystal(scene); initJuice();
   initPortal(scene, { restart: () => goToLevel(pre + '1') }); initRealityPortals(scene); initBullets(scene); initHideSpots(scene); initExitDoor(scene);
   initInput(); initGameScene(); initCaught(); initFloorSelect(); if (EDITOR) initEditor();
   document.getElementById('floorsBtn').addEventListener('click', openFloors);
@@ -95,7 +96,7 @@ function frame(dt) {
   animatePlayer(); animateBombs(dt);                       // bombas después del jugador: le levantan los brazos al cargarlas
   updateStartDesk(); updateBubble(cam, stage); updateExitDoor(dt); updateCodeRain(dt);
   updateParticles(dt); animateHideSpots(dt, player);
-  animateAgents(); animateCams(); animateRacks(); animateLasers(); animateTowers(dt); animateSafes(dt); animateMainFrames(dt); animateCrystal(); animatePortal(dt); animateRealityPortals(dt);
+  animateAgents(); animateCams(); animateRacks(); animateLasers(); animateTowers(dt); animateSafes(dt); animateMainFrames(dt); animateBees(dt); animateCrystal(); animatePortal(dt); animateRealityPortals(dt);
   const cEl = document.getElementById('crystals'); cEl.textContent = `◆ ${crystalCount() + (G.gotCrystal && !G.hadCrystal ? 1 : 0)}`; cEl.classList.toggle('got', !!G.gotCrystal);
   updateElevator(real); updateCaught(real); updateJuice(real, cam, stage);
   updateCamera(real, player); updateSeeThrough(dt, player);

@@ -7,6 +7,7 @@ import { crystalSound } from '../Core/Audio.js';
 import { puff } from '../FX/Particles.js';
 import { player } from './Player.js';
 import { safeCrystalPos } from './Safe.js';
+import { bossCrystalPos } from './MainFrame.js';
 import { shake, kick, hitstop, flash } from '../FX/Juice.js';
 import { glowTex, starTex, beamTex } from '../FX/GlowTex.js';
 
@@ -56,6 +57,7 @@ function showToast(text) {
 
 // dónde está el cristal ahora: { x, y, hop (altura extra), ready (se puede recoger) } o null si no hay / sigue en la caja
 function where() {
+  if (G.bossCrystal) return bossCrystalPos();                          // nivel con jefe: lo suelta al ser derrotado
   if (G.safeCrystal) return safeCrystalPos();
   const c = G.level.crystal; return c ? { x: c.x, y: c.y, hop: 0, ready: true } : null;
 }
