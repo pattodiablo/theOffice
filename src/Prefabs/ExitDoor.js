@@ -7,6 +7,8 @@ import { ease } from '../Core/MathUtils.js';
 import { doorSound, callBeep, arrivalChime } from '../Core/Audio.js';
 import { M } from '../Materials/Materials.js';
 import { box } from './Character.js';
+import { bossTargets } from './MainFrame.js';
+import { popText, shake, haptic } from '../FX/Juice.js';
 
 // Puerta EXIT: dos hojas de vidrio corredizas. El nivel termina solo al cruzarla.
 // Antes hay que llamar al ascensor: pisar el círculo frente al botón (a la derecha de la puerta) y esperar
@@ -18,6 +20,9 @@ const v = new THREE.Vector3();
 // Botón para llamar al ascensor: por defecto a la derecha de la puerta. Si el nivel tiene level.callBtn ({ x, y, a }:
 // punto del piso junto a la pared y hacia dónde mira, se coloca en el editor), el botón va ahí y el de la puerta no existe.
 const customBtn = () => G.level && G.level.callBtn;
+// en un piso con jefe (Main Frame), el ascensor está bloqueado hasta derrotarlo
+export const exitLocked = () => bossTargets().length > 0;
+let lockMsgT = 0, wasLocked = false;
 const callSpot = () => { const b = customBtn(); if (b) return { x: b.x + Math.cos(b.a) * 1.5, y: b.y + Math.sin(b.a) * 1.5 };
   const [x, y] = G.EXIT.point(14.5, -4); return { x, y }; };                      // dónde pararse para llamar
 function placePanel(E, rE) {                                                       // la placa en la pared
@@ -61,6 +66,16 @@ export function initExitDoor(scene) {
 export function updateElevatorCall(dt, p) {
   if (!G.exitOk) return;
   const s = callSpot();
+  lockMsgT -= dt;
+  const locked = exitLocked();
+  if (wasLocked && !locked) { popText(s.x, s.y, 'ELEVATOR UNLOCKED', 'cyan'); arrivalChime(); }   // derrotaste al jefe
+  wasLocked = locked;
+  if (locked) {                                    // bloqueado: avisa si intentas llamarlo
+    if (Math.hypot(p.x - s.x, p.y - s.y) < CALL_R && lockMsgT <= 0) {
+      lockMsgT = 2.5; popText(s.x, s.y, 'LOCKED: DEFEAT THE MAIN FRAME', 'red'); shake(.3); haptic(30); callBeep();
+    }
+    return;
+  }
   if (G.elev === 'idle' && Math.hypot(p.x - s.x, p.y - s.y) < CALL_R) { G.elev = 'calling'; G.elevT = ELEVATOR_WAIT; callBeep(); }
   else if (G.elev === 'calling' && (G.elevT -= dt) <= 0) { G.elev = 'arrived'; G.elevT = 0; arrivalChime(); }
 }
@@ -95,17 +110,18 @@ export function updateExitDoor(dt) {
   atE(leafL, LEAF_W / 2 - k * LEAF_W, 1.5, Z); atE(leafR, LEAF_W * 1.5 + k * LEAF_W, 1.5, Z);   // las hojas se esconden dentro de la pared
   // botón, círculo y cuenta regresiva
   glowMat.color.copy(glowDark).lerp(glowOn, k); light.intensity = 900 * k;
-  const s = callSpot(), c = G.elev === 'arrived' ? SEMA.green : G.elev === 'calling' ? SEMA.yellow : SEMA.red;
+  const locked = G.mode !== 'edit' && exitLocked();
+  const s = callSpot(), c = locked ? 0x555a5e : G.elev === 'arrived' ? SEMA.green : G.elev === 'calling' ? SEMA.yellow : SEMA.red;   // gris = bloqueado
   placePanel(E, rE);
   callRing.position.set(s.x, Z + .3, -s.y);
   const blink = G.elev === 'calling' ? .55 + .45 * Math.sin(G.t * 10) : 1;
   buttonMat.color.setHex(c).multiplyScalar(blink); callRing.material.color.setHex(c);
   callRing.material.opacity = G.elev === 'idle' ? .4 + .25 * Math.sin(G.t * 4) : .6;
-  const showNum = G.exitOk && (G.mode === 'play' || G.mode === 'exit') && G.intro < 0 && G.elev !== 'idle';
+  const showNum = G.exitOk && (G.mode === 'play' || G.mode === 'exit') && G.intro < 0 && (G.elev !== 'idle' || locked);
   numEl.style.display = showNum ? 'block' : 'none';
   if (showNum) {
-    numEl.textContent = G.elev === 'calling' ? Math.ceil(G.elevT) : '▲';
-    numEl.className = G.elev;
+    numEl.textContent = locked ? '🔒' : G.elev === 'calling' ? Math.ceil(G.elevT) : '▲';
+    numEl.className = locked ? 'locked' : G.elev;
     v.set(panel.position.x, Z + 15, panel.position.z).project(cam);
     numEl.style.left = ((v.x + 1) / 2 * stage.clientWidth) + 'px'; numEl.style.top = ((1 - v.y) / 2 * stage.clientHeight) + 'px';
   }
