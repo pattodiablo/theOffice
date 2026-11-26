@@ -81,7 +81,7 @@ export function animateHideSpots(dt, p) {
   G.popT += dt;
   const pop = popScale(G.popT, .25, .35), disguised = G.mode !== 'edit' && G.hiddenKind;
   const ending = disguised && G.hideT < 1.5 && Math.floor(G.t * 8) % 2;     // aviso: está por terminar
-  if (!(G.entOk && G.intro >= 0 && G.mode === 'play')) { p.ch.root.visible = !disguised || ending; p.ch.root.scale.setScalar(disguised ? 1 : pop); } // al salir del ascensor lo maneja animatePlayer
+  if (!(G.entOk && G.intro >= 0 && G.mode === 'play')) { p.ch.root.visible = (!disguised || ending) && !(G.grace > 0 && G.mode === 'play' && Math.floor(G.t * 12) % 2); p.ch.root.scale.setScalar(disguised ? 1 : pop); } // al salir del ascensor lo maneja animatePlayer
   for (const k in disguises) { const g = disguises[k]; g.visible = disguised === k && !ending; if (g.visible) { g.position.set(p.x, Z, -p.y); g.scale.setScalar(pop); } }
   const pulse = .4 + .2 * Math.sin(G.t * 4), play = G.mode !== 'edit';
   zones.forEach((z, i) => {
