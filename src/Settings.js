@@ -108,6 +108,10 @@ export const MAINFRAME = {
   bombFirst: 3,               // segundos desde que despierta hasta la primera bomba
   bombEvery: 7,               // cada cuántos segundos cae otra (si no hay una en juego)
   bombMin: 16, bombMax: 40,   // a qué distancia de su centro caen (vóxeles)
+  // al derrotarlo suelta el cristal del piso (si el nivel tiene jefe, el cristal suelto y el de la caja fuerte se ignoran)
+  crystalDelay: 1.2,          // segundos desde que cae derrotado hasta que sale el cristal
+  crystalTime: 1,             // segundos de vuelo del cristal
+  crystalDist: 20,            // dónde cae: a esta distancia del centro, hacia donde estás tú
 };
 // Noquear por la espalda (automático): tocar a un guardia por detrás lo deja en el piso unos segundos.
 // No funciona si ya te vio ("!") ni con el dron vigía (flota). Durante el glitch funciona aunque te mire.

@@ -10,6 +10,8 @@ import { zapSound, towerRiseSound } from '../Core/Audio.js';
 import { shake, kick, hitstop, flash, popText } from '../FX/Juice.js';
 import { puff } from '../FX/Particles.js';
 import { spawnBomb, tempBombsActive } from './Bomb.js';
+import { player } from './Player.js';
+import { crystalSound } from '../Core/Audio.js';
 
 // Main Frame: el jefe (prop "MainFrame", modelo assets/vox/props/MainFrame.vox con partes "cuerpo" y "patas").
 // El cuerpo va pegado al escenario; la cruz de patas del piso GIRA alrededor del centro y, cuando el jugador entra
@@ -35,7 +37,7 @@ export function initMainFrames(scene) {
 }
 
 export function syncMainFrames() {
-  group.clear(); bosses = [];
+  group.clear(); bosses = []; G.bossCrystal = null;
   for (const p of G.level.props) {
     if (!p.t.startsWith('MainFrame')) continue;
     const R = rot(p.t, p.r), legs = R.part('patas');
@@ -64,10 +66,11 @@ export function syncMainFrames() {
     });
     bosses.push({ x: p.x + cx, y: p.y + cy, tipR, pivot, beams, ring, mat, cables, ang: 0, state: 'idle', t: 0 });
   }
+  if (bosses.length) G.bossCrystal = { open: false, t: 0, inX: bosses[0].x, inY: bosses[0].y, outX: bosses[0].x, outY: bosses[0].y };   // el primero guarda el cristal
   resetMainFrames();
 }
 export function resetMainFrames() {   // el ángulo sigue donde estaba (sin salto al reintentar)
-  G.bossDown = false;
+  G.bossDown = false; if (G.bossCrystal) Object.assign(G.bossCrystal, { open: false, t: 0 });
   for (const b of bosses) Object.assign(b, { state: 'idle', t: 0, spinV: B.spinIdle, hp: B.hp, dead: false, stunT: 0, bombT: B.bombFirst, sparkT: 0 });
 }
 
@@ -79,10 +82,29 @@ export function hitBoss(b) {                                         // le explo
   if (b.hp <= 0) {                                                   // ¡derrotado!
     b.dead = true; b.state = 'down'; b.t = 0; G.bossDown = true;
     flash('255,255,255', .6); popText(b.x, b.y, 'MAIN FRAME DOWN!', 'cyan');
+    const c = G.bossCrystal;
+    if (c && c.inX === b.x && c.inY === b.y) {                         // suelta el cristal hacia donde está el jugador
+      const s = crystalSpot(b); Object.assign(c, { open: true, t: -B.crystalDelay, outX: s[0], outY: s[1] });
+    }
   } else {
     b.state = 'stun'; b.t = 0; b.stunT = B.stunTime; flash('255,80,60', .3);
     popText(b.x, b.y, `HIT! ${b.hp} LEFT`, 'red');
   }
+}
+// dónde cae el cristal: hacia el jugador, a B.crystalDist del centro (si ahí no hay lugar, prueba girando)
+function crystalSpot(b) {
+  const a0 = Math.atan2(player.y - b.y, player.x - b.x);
+  for (let i = 0; i < 16; i++) {
+    const a = a0 + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * .4, x = b.x + Math.cos(a) * B.crystalDist, y = b.y + Math.sin(a) * B.crystalDist;
+    if (free(x, y, 3)) return [x, y];
+  }
+  return [player.x, player.y];
+}
+// el cristal del jefe: null mientras pelea; sale de su cabeza, vuela en arco y cae (ready = ya se puede recoger)
+export function bossCrystalPos() {
+  const c = G.bossCrystal; if (!c || !c.open || c.t < 0) return null;
+  const k = Math.min(1, c.t / B.crystalTime), e = 1 - (1 - k) ** 2;
+  return { x: c.inX + (c.outX - c.inX) * e, y: c.inY + (c.outY - c.inY) * e, hop: (1 - k) * 8 + Math.sin(k * Math.PI) * 10, ready: k >= 1 };
 }
 // busca un lugar libre en el piso, a cierta distancia del jefe, para que caiga una bomba
 function bombSpot(b) {
@@ -136,6 +158,11 @@ export function updateMainFrames(dt, p) {
 // visual (cada frame)
 export function animateMainFrames(dt) {
   const play = G.mode === 'play' || G.mode === 'over' || G.mode === 'caught';
+  const bc = G.bossCrystal;
+  if (bc && bc.open && play) {
+    const was = bc.t; bc.t = Math.min(B.crystalTime, bc.t + dt);
+    if (was < 0 && bc.t >= 0) { crystalSound(); puff(bc.inX, bc.inY); kick(.06); }   // ¡sale el cristal!
+  }
   for (const b of bosses) {
     if (!play) { b.state = 'idle'; b.dead = false; b.spinV = B.spinIdle; b.ang += dt * B.spinIdle; }
     const stun = b.state === 'stun', down = b.state === 'down';

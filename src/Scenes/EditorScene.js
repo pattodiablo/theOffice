@@ -57,7 +57,7 @@ function drawRoutes() {
 function refreshStatus() {
   const ok = exitReachable(), L = G.level;
   $('#status').innerHTML = `Camino al EXIT: <b class="${ok ? '' : 'bad'}">${!G.exitOk ? 'falta la salida' : ok ? 'libre' : 'bloqueado'}</b>` +
-    ` · ${L.props.some(p => p.t === 'safe') ? '◆ cristal en la caja fuerte' : L.crystal ? '◆ cristal' : '<b class="bad">sin cristal</b>'}${L.portal ? ' · portal' : ''}` +
+    ` · ${L.props.some(p => p.t.startsWith('MainFrame')) ? '◆ cristal: lo suelta el jefe' : L.props.some(p => p.t === 'safe') ? '◆ cristal en la caja fuerte' : L.crystal ? '◆ cristal' : '<b class="bad">sin cristal</b>'}${L.portal ? ' · portal' : ''}` +
     (L.entrance ? ` · inicio: <b class="${G.entOk ? '' : 'bad'}">${G.entOk ? 'entrada' : 'entrada inválida'}</b>` : '') +
     (badRoutes.length ? ` · <b class="bad">ruta ${badRoutes.join(', ')} choca</b>` : '') + ` · ${TW} × ${TD} baldosas · ${L.props.length} props · ${L.agents.filter(a => a.length).length} agentes · ${(L.cams || []).length} cámaras · ${(L.lasers || []).length} láseres · ${(L.bombs || []).length} bombas · ${(L.hides || []).length} escondites`;
 }
