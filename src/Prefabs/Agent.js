@@ -11,7 +11,7 @@ import { rayDist } from '../World/Grid.js';
 import { flowFrom, stepFlow } from '../World/Navigation.js';
 import { turnTo } from '../Core/MathUtils.js';
 import { alertSound, footstep, koSound } from '../Core/Audio.js';
-import { shake, kick, hitstop, slowmo, flash, popText } from '../FX/Juice.js';
+import { shake, kick, hitstop, slowmo, flash, popText, haptic } from '../FX/Juice.js';
 import { fireBullet } from './Bullet.js';
 import { puff } from '../FX/Particles.js';
 import { player } from './Player.js';
@@ -179,7 +179,7 @@ function knockOut(a, p) {
   Object.assign(a, { state: 'ko', koT: TAKEDOWN.koTime, meter: 0, aim: 0, burstLeft: 0, caller: false, found: false });
   a.ang = Math.atan2(a.y - p.y, a.x - p.x);                              // cae hacia adelante, lejos de ti
   G.takedowns = (G.takedowns || 0) + 1;
-  koSound(); puff(a.x, a.y); hitstop(.1); shake(.9); kick(.12); flash('255,255,255', .25); popText(a.x, a.y, 'TAKEDOWN!');
+  koSound(); puff(a.x, a.y); haptic(45); hitstop(.1); shake(.9); kick(.12); flash('255,255,255', .25); popText(a.x, a.y, 'TAKEDOWN!');
 }
 // noqueado por la explosión de una bomba (Bomb.js): cae lejos del centro de la explosión por t segundos
 export function stunAgent(a, t, x, y) {

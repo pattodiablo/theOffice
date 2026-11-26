@@ -92,6 +92,7 @@ export const JUICE = {
   slowmo: true,               // cámara lenta en los "casi me dan"
   nearMiss: 4.5,              // a qué distancia una bala cuenta como "casi me dan" (vóxeles)
   dust: true,                 // polvito al caminar
+  haptics: true,              // vibración en el celular (si el dispositivo la soporta: Android sí, iPhone no)
 };
 // Main Frame (prop "MainFrame", el jefe): su cruz de patas gira y dispara un láser desde cada punta
 export const MAINFRAME = {
