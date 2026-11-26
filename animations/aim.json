@@ -1,0 +1,17 @@
+{
+ "duration": 1,
+ "loop": true,
+ "tracks": {
+  "armR.rz": [
+   [
+    0,
+    1.5708
+   ],
+   [
+    1,
+    1.5708
+   ]
+  ]
+ },
+ "name": "aim"
+}
