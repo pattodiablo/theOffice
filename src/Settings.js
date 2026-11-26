@@ -90,6 +90,23 @@ export const JUICE = {
   dust: true,                 // polvito al caminar
 };
 export const CRYSTAL = { pickR: 3.5 };
+// Bomba aturdidora (level.bombs = [{ x, y }], editor › Seguridad › Bomba): cae del techo, la recoges quedándote en su círculo,
+// la cargas sobre la cabeza y la lanzas sola al primer agente que entre en tu radio. Los agentes de la explosión quedan aturdidos.
+export const BOMB = {
+  pickR: 6,                   // radio del círculo para recogerla (vóxeles)
+  pickTime: .6,               // segundos dentro del círculo para levantarla
+  liftTime: .35,              // animación de levantarla sobre la cabeza
+  carrySpeed: .85,            // velocidad del jugador mientras la carga (× PLAYER_SPEED)
+  throwR: 30,                 // radio de lanzamiento: si un agente entra (y lo ves), se la lanzas
+  throwTime: .55,             // segundos de vuelo
+  throwArc: 14,               // altura del arco
+  blastR: 13,                 // radio de la explosión
+  stunTime: 6,                // segundos que quedan aturdidos los agentes
+  dropDelay: 1,               // segundos desde que empieza el nivel hasta que caen
+  warnTime: .9,               // aviso en el piso antes de caer
+  dropTime: .55,              // segundos de caída
+  respawn: 12,                // segundos para que caiga otra en el mismo lugar (0 = no vuelve)
+};
 // Caja fuerte (prop "safe"): si el nivel tiene una, el cristal está ADENTRO (se ignora el cristal suelto).
 // Hay que quedarse pegado a ella (dentro del círculo) crackTime segundos; si te alejas se pierde el avance.
 export const SAFE = {

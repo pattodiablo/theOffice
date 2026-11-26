@@ -184,3 +184,30 @@ export const safeOpenSound = () => tone((a, t0) => {
   h.gain.setValueAtTime(.0001, t0 + .12); h.gain.exponentialRampToValueAtTime(.03, t0 + .2); h.gain.exponentialRampToValueAtTime(.0001, t0 + .75);
   c.connect(h).connect(a.destination); c.start(t0 + .12); c.stop(t0 + .8);
 });
+
+// bomba: silbido al caer · golpe al tocar el piso · "fum" al levantarla · explosión aturdidora (zumbido eléctrico + golpe grave)
+export const bombFallSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(1800, t0); o.frequency.exponentialRampToValueAtTime(500, t0 + .5);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.04, t0 + .05); g.gain.exponentialRampToValueAtTime(.0001, t0 + .55);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .56);
+});
+export const bombLandSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + .2);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.35, t0 + .008); g.gain.exponentialRampToValueAtTime(.0001, t0 + .28);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .3);
+});
+export const bombLiftSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'square'; o.frequency.setValueAtTime(300, t0); o.frequency.exponentialRampToValueAtTime(700, t0 + .15);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.05, t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + .18);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .2);
+});
+export const bombBoomSound = () => tone((a, t0) => {
+  const len = a.sampleRate * .6, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 2;
+  const n = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(); n.buffer = buf; f.type = 'lowpass'; f.frequency.setValueAtTime(2400, t0); f.frequency.exponentialRampToValueAtTime(200, t0 + .5);
+  g.gain.setValueAtTime(.5, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + .6); n.connect(f).connect(g).connect(a.destination); n.start(t0);
+  const o = a.createOscillator(), h = a.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(110, t0); o.frequency.exponentialRampToValueAtTime(35, t0 + .45);
+  h.gain.setValueAtTime(.0001, t0); h.gain.exponentialRampToValueAtTime(.5, t0 + .01); h.gain.exponentialRampToValueAtTime(.0001, t0 + .5); o.connect(h).connect(a.destination); o.start(t0); o.stop(t0 + .52);
+  const z = a.createOscillator(), k = a.createGain(); z.type = 'sawtooth'; z.frequency.setValueAtTime(900, t0 + .02); z.frequency.exponentialRampToValueAtTime(120, t0 + .7);
+  k.gain.setValueAtTime(.0001, t0 + .02); k.gain.exponentialRampToValueAtTime(.06, t0 + .05); k.gain.exponentialRampToValueAtTime(.0001, t0 + .75); z.connect(k).connect(a.destination); z.start(t0 + .02); z.stop(t0 + .76);
+});
