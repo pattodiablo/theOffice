@@ -7,7 +7,7 @@ import { listGeo } from '../Core/VoxelMesh.js';
 import { M } from '../Materials/Materials.js';
 import { hAt, free } from '../World/Grid.js';
 import { zapSound, towerRiseSound } from '../Core/Audio.js';
-import { shake, kick, hitstop, flash, popText } from '../FX/Juice.js';
+import { shake, kick, hitstop, flash, popText, haptic } from '../FX/Juice.js';
 import { puff } from '../FX/Particles.js';
 import { spawnBomb, tempBombsActive } from './Bomb.js';
 import { player } from './Player.js';
@@ -78,7 +78,7 @@ export function resetMainFrames() {   // el ángulo sigue donde estaba (sin salt
 export const bossTargets = () => bosses.filter(b => !b.dead);       // a quién le puede lanzar una bomba el jugador
 export function hitBoss(b) {                                         // le explotó una bomba encima
   if (b.dead) return;
-  b.hp--; hitstop(.1); shake(1.3); kick(.14); puff(b.x, b.y); puff(b.x + 3, b.y - 2);
+  b.hp--; hitstop(.1); shake(1.3); kick(.14); haptic(b.hp <= 0 ? [80, 40, 80, 40, 200] : [60, 30, 60]); puff(b.x, b.y); puff(b.x + 3, b.y - 2);
   if (b.hp <= 0) {                                                   // ¡derrotado!
     b.dead = true; b.state = 'down'; b.t = 0; G.bossDown = true;
     flash('255,255,255', .6); popText(b.x, b.y, 'MAIN FRAME DOWN!', 'cyan');

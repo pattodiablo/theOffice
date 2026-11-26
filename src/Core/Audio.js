@@ -222,3 +222,23 @@ export const koSound = () => tone((a, t0) => {
   f.connect(h).connect(a.destination); f.start(t0 + .28); f.stop(t0 + .52);
 
 });
+// abeja: zumbido que sube (te vio y se prepara), "fiuuu" de la embestida y golpe contra la pared
+export const beeBuzzSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(), l = a.createOscillator(), lg = a.createGain();
+  o.type = 'sawtooth'; o.frequency.setValueAtTime(170, t0); o.frequency.linearRampToValueAtTime(320, t0 + .65);
+  l.frequency.value = 38; lg.gain.value = 25; l.connect(lg).connect(o.frequency);                 // vibrato de alas
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.07, t0 + .08); g.gain.setValueAtTime(.07, t0 + .55); g.gain.exponentialRampToValueAtTime(.0001, t0 + .7);
+  o.connect(g).connect(a.destination); o.start(t0); l.start(t0); o.stop(t0 + .72); l.stop(t0 + .72);
+});
+export const beeDashSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'triangle';
+  o.frequency.setValueAtTime(900, t0); o.frequency.exponentialRampToValueAtTime(250, t0 + .35);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.12, t0 + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + .38);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .4);
+});
+export const beeBonkSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'square';
+  o.frequency.setValueAtTime(180, t0); o.frequency.exponentialRampToValueAtTime(70, t0 + .12);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.18, t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .15);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .17);
+});

@@ -19,7 +19,7 @@ const W = 128, D = 104, H = 34; // tamaño de la base que espera el juego
 // Nombres que se muestran en el editor; un prop nuevo sin entrada usa su nombre de archivo.
 const LABELS = { desk: 'Cubículo', plant: 'Planta', plant_s: 'Planta chica', copier: 'Fotocopiadora',
   cabinet: 'Archivador', micro: 'Archivador + micro', cooler: 'Dispensador', panel: 'Panel', muro: 'Muro', trash: 'Basurero',
-  rack: 'Rack de servidores (apaga las cámaras)', tower: 'Torre sensor (dispara láseres)', safe: 'Caja fuerte (guarda el cristal)', MainFrame: 'Main Frame (jefe: patas que giran y disparan láseres)', realityportal: 'Portal de realidad (se echan los cristales; final del juego)', vigia: 'Vigía (modelo del dron)', vigia1: 'Vigía (modelo del dron)' };
+  rack: 'Rack de servidores (apaga las cámaras)', tower: 'Torre sensor (dispara láseres)', safe: 'Caja fuerte (guarda el cristal)', MainFrame: 'Main Frame (jefe: patas que giran y disparan láseres)', realityportal: 'Portal de realidad (se echan los cristales; final del juego)', bee: 'Abeja robot (te detecta y te embiste)', vigia: 'Vigía (modelo del dron)', vigia1: 'Vigía (modelo del dron)' };
 
 // primer modelo de un .vox: { size: [w, d, h], vox: [[x, y, z, 'r,g,b']] }
 function readVox(file) {

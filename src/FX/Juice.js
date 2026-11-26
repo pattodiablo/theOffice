@@ -28,6 +28,13 @@ export function flash(rgb, a = .35) {
   flashEl.style.transition = 'none'; flashEl.style.background = `rgba(${rgb},${a})`; flashEl.style.opacity = 1;
   void flashEl.offsetWidth; flashEl.style.transition = 'opacity .35s ease-out'; flashEl.style.opacity = 0;
 }
+// vibración corta en el celular (navigator.vibrate). ms = milisegundos o un patrón [vibra, pausa, vibra…].
+// Android con Chrome la soporta; iPhone/iPad no la permiten desde una página web (ahí simplemente no pasa nada).
+export function haptic(ms) {
+  if (!JUICE.on || !JUICE.haptics || document.hidden) return;
+  try { navigator.vibrate?.(ms); } catch (e) {}
+}
+
 export function popText(x, y, text, cls = '') {
   if (!JUICE.on) return;
   const el = document.createElement('div'); el.className = 'pop ' + cls; el.textContent = text; document.body.append(el);

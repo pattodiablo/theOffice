@@ -3,7 +3,7 @@ import { G } from '../Core/Game.js';
 import { DREAM_MESSAGES } from '../Settings.js';
 import { turnTo } from '../Core/MathUtils.js';
 import { caughtSound } from '../Core/Audio.js';
-import { shake, kick, hitstop, slowmo, flash, popText } from '../FX/Juice.js';
+import { shake, kick, hitstop, slowmo, flash, popText, haptic } from '../FX/Juice.js';
 import { setAlarm, setGlitchFX } from '../FX/ScreenFX.js';
 import { player } from '../Prefabs/Player.js';
 import { setMode } from './GameScene.js';
@@ -35,7 +35,7 @@ export function startCaught(agent) {
   let i; do { i = Math.random() * DREAM_MESSAGES.length | 0; } while (DREAM_MESSAGES.length > 1 && i === lastMsg); // no repetir el anterior
   lastMsg = i; msg = DREAM_MESSAGES[i];
   G.shake = 3.5;                                   // Engine sacude la cámara y lo va apagando
-  kick(.14); flash('255,40,40', .45);
+  kick(.14); flash('255,40,40', .45); haptic([90, 50, 160]);   // te atraparon
   document.body.classList.add('caught'); setGlitchFX(false); caughtSound();
 }
 

@@ -8,7 +8,7 @@ import { puff } from '../FX/Particles.js';
 import { player } from './Player.js';
 import { safeCrystalPos } from './Safe.js';
 import { bossCrystalPos } from './MainFrame.js';
-import { shake, kick, hitstop, flash } from '../FX/Juice.js';
+import { shake, kick, hitstop, flash, haptic } from '../FX/Juice.js';
 import { glowTex, starTex, beamTex } from '../FX/GlowTex.js';
 
 // Cristal: un "fragmento de realidad" por nivel (level.crystal = { x, y }, se pone en el editor › Nivel › Cristal).
@@ -70,7 +70,7 @@ export function updateCrystal(dt, p) {
   const c = where(); if (!c || !c.ready || G.gotCrystal) return;
   if (Math.hypot(p.x - c.x, p.y - c.y) < CRYSTAL.pickR) {
     G.gotCrystal = true; crystalSound(); puff(c.x, c.y);
-    hitstop(.09); kick(.12); shake(.4); flash('120,220,255', .4);
+    hitstop(.09); kick(.12); shake(.4); flash('120,220,255', .4); haptic([20, 40, 20]);
     pickT0 = G.t; absorbed = false; from = { x: c.x, y: c.y, z: Z + 8 + c.hop + Math.sin(G.t * 2.4) * .9 };
     showToast(G.hadCrystal ? 'REALITY FRAGMENT <small>(already yours)</small>' : 'REALITY FRAGMENT ACQUIRED');
   }

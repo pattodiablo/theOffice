@@ -3,8 +3,11 @@
 // ======================================================================
 
 // ---- Jugador ----
-export const ANIM_SPEED = 1.15;                          // velocidad de las animaciones de caminar (todos)
-export const PLAYER_SPEED = 29;                            // vóxeles por segundo
+// Ritmo general del juego: multiplica la velocidad del jugador, de los agentes (patrullar, perseguir, buscar)
+// y de sus animaciones de caminar. 1 = como antes · 1.25 = 25 % más rápido.
+export const GAME_PACE = 1.25;
+export const ANIM_SPEED = 1.15 * GAME_PACE;               // velocidad de las animaciones de caminar (todos)
+export const PLAYER_SPEED = 29 * GAME_PACE;               // vóxeles por segundo
 export const GLITCH_TIME = 2.5, GLITCH_COOLDOWN = 8;       // segundos que congela a los agentes · recarga
 
 // ---- Cámara ----
@@ -46,6 +49,7 @@ export const AGENT_TYPES = {
     hunchMin: 7, hunchMax: 12, hunchNoise: 14, hunchReach: 70, predict: .5, helpRadius: 50,
     drone: true, hover: 10, scale: 1.3, seeOver: 18 },
 };
+for (const t of Object.values(AGENT_TYPES)) for (const k of ['patrol', 'chase', 'search']) t[k] *= GAME_PACE;   // ritmo general
 //   burst: disparos seguidos por ráfaga (cada uno por sus dos cañones) · burstGap: segundos entre ellos · bulletSpeed: velocidad de sus balas
 //   vigia (dron): hover = altura a la que flota · scale = tamaño del modelo vigia*.vox · seeOver = ve por encima de lo más bajo
 //   que esto (los agentes: 12, así los cubículos los tapan; el vigía flota y solo lo tapan paneles, muros y paredes)
@@ -88,6 +92,7 @@ export const JUICE = {
   slowmo: true,               // cámara lenta en los "casi me dan"
   nearMiss: 4.5,              // a qué distancia una bala cuenta como "casi me dan" (vóxeles)
   dust: true,                 // polvito al caminar
+  haptics: true,              // vibración en el celular (si el dispositivo la soporta: Android sí, iPhone no)
 };
 // Main Frame (prop "MainFrame", el jefe): su cruz de patas gira y dispara un láser desde cada punta
 export const MAINFRAME = {
@@ -112,6 +117,21 @@ export const MAINFRAME = {
   crystalDelay: 1.2,          // segundos desde que cae derrotado hasta que sale el cristal
   crystalTime: 1,             // segundos de vuelo del cristal
   crystalDist: 20,            // dónde cae: a esta distancia del centro, hacia donde estás tú
+};
+// Abeja robot (prop "bee"): revolotea cerca de donde la pusiste; si te ve dentro de su rango, zumba, marca en el piso
+// la línea por donde va a pasar y te embiste en línea recta. Si te toca, te atrapa. Si choca contra una pared queda mareada.
+export const BEE = {
+  range: 30,                  // a qué distancia te detecta (si te ve: las paredes y muebles altos la tapan)
+  windup: .7,                 // segundos de aviso antes de embestir (zumbido + línea roja en el piso)
+  dashSpeed: 80,              // velocidad de la embestida (vóxeles por segundo)
+  dashDist: 46,               // largo máximo de la embestida
+  hitR: 4.5,                  // qué tan cerca tiene que pasar para picarte
+  dazedTime: 1.3,             // segundos mareada después de embestir (o de chocar)
+  cooldown: 1,                // segundos de calma al volver, antes de poder embestir de nuevo
+  speed: 16,                  // velocidad normal (revolotear y volver)
+  wander: 8,                  // radio en el que revolotea alrededor de su lugar
+  flyH: 9,                    // altura de vuelo sobre el piso
+  scale: .7,                  // tamaño del modelo en el juego (1 = como en MagicaVoxel)
 };
 // Noquear por la espalda (automático): tocar a un guardia por detrás lo deja en el piso unos segundos.
 // No funciona si ya te vio ("!") ni con el dron vigía (flota). Durante el glitch funciona aunque te mire.
