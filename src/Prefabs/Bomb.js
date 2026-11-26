@@ -19,7 +19,7 @@ import { agents, stunAgent } from './Agent.js';
 // Recoger: quedarse BOMB.pickTime segundos dentro de su círculo. Mientras la cargas, si un agente que no esté aturdido
 // entra en BOMB.throwR y lo ves, se la lanzas sola; la explosión aturde a todos los agentes en BOMB.blastR.
 // Brazos: clips "carry" (cargándola) y "throw" (lanzándola), editables en animator.html.
-const HOLD_Y = 19.5, FALL_H = 70, FACE = Math.PI / 4;   // altura sobre la cabeza · desde dónde cae · el lente mira a la cámara
+const HOLD_Y = 21.5, FALL_H = 70, FACE = Math.PI / 4;   // altura sobre la cabeza · desde dónde cae · el lente mira a la cámara
 let group, bombs = [], held = null, throwT = -1, TEX;
 const v = new THREE.Vector3();
 const ADD = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending };
@@ -79,7 +79,7 @@ export function resetBombs() {
 function throwTarget() {
   let best = null, bd = BOMB.throwR;
   for (const a of agents) {
-    if (!a.path.length || a.stun > 0) continue;
+    if (!a.path.length || a.state === 'ko') continue;
     const d = Math.hypot(a.x - player.x, a.y - player.y);
     if (d < bd && rayDist(player.x, player.y, Math.atan2(a.y - player.y, a.x - player.x), d, 12) >= d - 2) { bd = d; best = a; }
   }
@@ -91,7 +91,7 @@ function explode(b) {
   bombBoomSound(); puff(x, y); puff(x + 2, y - 1); puff(x - 2, y + 1);
   shake(1.1); kick(.12); hitstop(.07); flash('170,230,255', .35);
   let n = 0;
-  for (const a of agents) if (a.path.length && Math.hypot(a.x - x, a.y - y) < BOMB.blastR) { stunAgent(a, BOMB.stunTime); n++; }
+  for (const a of agents) if (a.path.length && Math.hypot(a.x - x, a.y - y) < BOMB.blastR) { stunAgent(a, BOMB.stunTime, x, y); n++; }
   popText(x, y, n ? (n > 1 ? `${n} STUNNED!` : 'STUNNED!') : 'MISSED!', n ? 'cyan' : 'red');
 }
 

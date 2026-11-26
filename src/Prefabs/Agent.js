@@ -181,6 +181,12 @@ function knockOut(a, p) {
   G.takedowns = (G.takedowns || 0) + 1;
   koSound(); puff(a.x, a.y); hitstop(.1); shake(.9); kick(.12); flash('255,255,255', .25); popText(a.x, a.y, 'TAKEDOWN!');
 }
+// noqueado por la explosión de una bomba (Bomb.js): cae lejos del centro de la explosión por t segundos
+export function stunAgent(a, t, x, y) {
+  Object.assign(a, { state: 'ko', koT: Math.max(a.state === 'ko' ? a.koT : 0, t), meter: 0, aim: 0, burstLeft: 0, caller: false, found: false });
+  if (Math.hypot(a.x - x, a.y - y) > .5) a.ang = Math.atan2(a.y - y, a.x - x);
+  for (const l of a.lasers) l.visible = false;
+}
 // un guardia tranquilo que ve a un compañero en el piso va a revisar ("?")
 function spotBodies(a) {
   for (const b of agents) {

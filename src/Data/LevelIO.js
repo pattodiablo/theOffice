@@ -35,7 +35,7 @@ export async function countLevels(n) {
 
 // completa los campos que los niveles viejos no tienen
 export function normalizeLevel(l) {
-  l.floor ||= fullFloor(); l.exit ||= { ...DEFAULT_EXIT }; l.hides ||= []; l.cams ||= []; l.lasers ||= [];
+  l.floor ||= fullFloor(); l.exit ||= { ...DEFAULT_EXIT }; l.hides ||= []; l.cams ||= []; l.lasers ||= []; l.bombs ||= [];
   const tw = Math.min(MAX_TILES, Math.max(MIN_TILES, ...l.floor.map(r => r.length))), td = Math.min(MAX_TILES, Math.max(MIN_TILES, l.floor.length)); // grilla rectangular
   l.floor = Array.from({ length: td }, (_, j) => (l.floor[j] || '').slice(0, tw).padEnd(tw, '0'));
   l.agentTypes ||= []; while (l.agentTypes.length < l.agents.length) l.agentTypes.push('normal'); l.agentTypes.length = l.agents.length; // tipo de cada agente: 'normal' o 'red'
