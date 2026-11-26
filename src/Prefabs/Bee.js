@@ -17,6 +17,7 @@ import { puff } from '../FX/Particles.js';
 //   mareada → después de embestir (o de chocar contra una pared) queda tambaleando unos segundos
 //   vuelve → regresa a su lugar y se calma un momento antes de poder embestir otra vez
 // No bloquea el paso. El glitch la congela. Escondido no te ve, y si te escondes a tiempo, pasa de largo.
+// Una bomba la noquea: cae al piso de costado unos segundos (BOMB.stunTime) y después vuelve a su lugar.
 let group, lineMat, shadowMat, bees = [];
 const HIT_WALL = 10;                     // altura de pared/mueble que la frena (vuela a BEE.flyH)
 
@@ -55,8 +56,12 @@ export function syncBees() {
   resetBees();
 }
 export function resetBees() {
-  for (const b of bees) Object.assign(b, { x: b.hx, y: b.hy, h: BEE.flyH, state: 'idle', t: 0, cool: 1, wx: b.hx, wy: b.hy, dx: 0, dy: 0, dist: 0, len: 0 });
+  for (const b of bees) Object.assign(b, { x: b.hx, y: b.hy, h: BEE.flyH, hv: BEE.flyH, state: 'idle', t: 0, cool: 1, wx: b.hx, wy: b.hy, dx: 0, dy: 0, dist: 0, len: 0 });
 }
+
+// ---------- bombas ----------
+export const beeTargets = () => bees.filter(b => b.state !== 'ko');   // a cuáles se les puede lanzar una bomba
+export function stunBee(b, t) { b.state = 'ko'; b.t = 0; b.koT = t; b.len = b.dist; }
 
 // hasta dónde puede embestir en línea recta antes de chocar con algo alto
 function dashLen(b, a) {
@@ -104,6 +109,8 @@ export function updateBees(dt, p) {
         if (wall) { beeBonkSound(); puff(b.x + b.dx * 2, b.y + b.dy * 2); if (dp < 40) shake(.35); popText(b.x, b.y, 'BONK!', 'cyan'); }
         b.state = 'dazed'; b.t = 0; b.dazedLong = wall;
       }
+    } else if (b.state === 'ko') {                                     // noqueada por una bomba: en el piso
+      if (b.t >= b.koT) { b.state = 'back'; b.t = 0; b.cool = BEE.cooldown; }
     } else if (b.state === 'dazed') {
       if (b.t >= BEE.dazedTime * (b.dazedLong ? 1.4 : 1)) { b.state = 'back'; b.t = 0; }
     }
@@ -116,14 +123,16 @@ export function animateBees(dt) {
   const play = G.mode === 'play' || G.mode === 'over' || G.mode === 'caught';
   for (const b of bees) {
     if (!play && G.mode !== 'menu') { b.x = b.hx; b.y = b.hy; b.state = 'idle'; }
-    const st = b.state, dash = st === 'dash', dazed = st === 'dazed', wind = st === 'windup';
-    const bob = Math.sin(G.t * 3 + b.hx) * .8, h = BEE.flyH + (dazed ? -2.5 + Math.sin(G.t * 9) * .6 : bob);
+    const st = b.state, dash = st === 'dash', dazed = st === 'dazed', wind = st === 'windup', ko = st === 'ko';
+    const bob = Math.sin(G.t * 3 + b.hx) * .8, goal = ko ? 1.5 : BEE.flyH + (dazed ? -2.5 + Math.sin(G.t * 9) * .6 : bob);
+    b.hv += (goal - b.hv) * Math.min(1, dt * (ko ? 8 : 4)); const h = b.hv;   // noqueada: cae al piso · al despertar vuelve a subir
     const shakeX = wind ? (Math.random() - .5) * .6 : 0;
     b.root.position.set(b.x + shakeX, Z + h, -b.y); b.root.scale.setScalar(BEE.scale);
     b.root.rotation.set(0, b.ang, 0);
     b.root.rotateZ(dash ? -.35 : wind ? .2 : 0);                       // se inclina hacia adelante al embestir · hacia atrás al apuntar
     if (dazed) b.root.rotateX(Math.sin(G.t * 7) * .35);                // mareada: se bambolea
-    const flap = Math.sin(G.t * (dash || wind ? 90 : 55)) * (dazed ? .25 : .55);
+    if (ko) b.root.rotateX(1.2);                                       // noqueada: tirada de costado
+    const flap = ko ? .1 * Math.sin(G.t * 4) : Math.sin(G.t * (dash || wind ? 90 : 55)) * (dazed ? .25 : .55);
     for (const w of b.wings) w.rotation.x = w.userData.side * (.25 + flap);
     b.shadow.position.set(b.x, Z + .25, -b.y); b.shadow.scale.setScalar(1 - (h - BEE.flyH) * .03);
     // línea roja del aviso: por dónde va a pasar
