@@ -14,6 +14,7 @@ import { hideAt } from '../Prefabs/HideSpot.js';
 import { agentType } from '../Prefabs/Agent.js';
 import { camSpot, camAt } from '../Prefabs/SecurityCam.js';
 import { laserEnds, laserAt } from '../Prefabs/LaserGate.js';
+import { gateAt } from '../Prefabs/SecurityGate.js';
 import { rebuild } from './Level.js';
 import { setMode } from './GameScene.js';
 
@@ -25,8 +26,8 @@ const ROUTE_COLORS = [0xff4d4d, 0xffb020, 0x4db8ff, 0xc77dff, 0xff7ac6, 0x9cff57
 const hex = c => '#' + c.toString(16).padStart(6, '0');
 const TIPS = {
   place: 'Clic en el piso para colocar · R rota · botón derecho: girar la vista (V la endereza)', erase: 'Clic sobre un prop para borrarlo', player: 'Clic donde empieza el jugador (con su escritorio)',
-  route: 'Clic para agregar puntos a la ruta del agente seleccionado', laser: 'Clic en el piso para tender un láser de pared a pared · R cambia la dirección · Borrar lo quita', cam: 'Clic junto a una pared (del fondo o del costado) para colgar una cámara · Borrar la quita', bomb: 'Clic en el piso para poner un punto donde cae una bomba · clic sobre una para quitarla', hide: 'Clic para poner una zona de camuflaje · Borrar la quita',
-  floorAdd: 'Clic o arrastra para agregar piso con paredes · pinta fuera del borde (línea punteada) para agrandar el nivel', floorOpen: 'Clic o arrastra para poner piso abierto, sin paredes ni barandas · fuera del borde agranda el nivel', floorDel: 'Clic o arrastra para quitar piso · las orillas vacías se recortan solas', exit: 'Clic junto a una pared (del fondo o del costado) para poner la salida; el botón del ascensor queda a su derecha',
+  route: 'Clic para agregar puntos a la ruta del agente seleccionado', gate: 'Clic en el piso para poner barrotes de pared a pared · R cambia la dirección · Borrar los quita', laser: 'Clic en el piso para tender un láser de pared a pared · R cambia la dirección · Borrar lo quita', cam: 'Clic junto a una pared (del fondo o del costado) para colgar una cámara · Borrar la quita', bomb: 'Clic en el piso para poner un punto donde cae una bomba · clic sobre una para quitarla', hide: 'Clic para poner una zona de camuflaje · Borrar la quita',
+  floorAdd: 'Clic o arrastra para agregar piso con paredes · pinta fuera del borde (línea punteada) para agrandar el nivel', floorOpen: 'Clic o arrastra para poner piso abierto, sin paredes ni barandas · fuera del borde agranda el nivel', floorDel: 'Clic o arrastra para quitar piso · las orillas vacías se recortan solas', glitch: 'Clic o arrastra sobre el piso para marcar baldosas glitch (parpadean y desaparecen; si el jugador está encima, cae) · clic en una marcada la quita', exit: 'Clic junto a una pared (del fondo o del costado) para poner la salida; el botón del ascensor queda a su derecha',
   crystal: 'Clic en el piso para poner el cristal (fragmento de realidad) de este piso',
   portal: 'Clic en el piso para poner el portal de salida de la Matrix (se abre con todos los cristales)',
   callBtn: 'Clic junto a una pared para poner el botón que llama al ascensor (reemplaza al de la puerta)',
@@ -59,7 +60,7 @@ function refreshStatus() {
   $('#status').innerHTML = `Camino al EXIT: <b class="${ok ? '' : 'bad'}">${!G.exitOk ? 'falta la salida' : ok ? 'libre' : 'bloqueado'}</b>` +
     ` · ${L.props.some(p => p.t.startsWith('MainFrame')) ? '◆ cristal: lo suelta el jefe' : L.props.some(p => p.t === 'safe') ? '◆ cristal en la caja fuerte' : L.crystal ? '◆ cristal' : '<b class="bad">sin cristal</b>'}${L.portal ? ' · portal' : ''}` +
     (L.entrance ? ` · inicio: <b class="${G.entOk ? '' : 'bad'}">${G.entOk ? 'entrada' : 'entrada inválida'}</b>` : '') +
-    (badRoutes.length ? ` · <b class="bad">ruta ${badRoutes.join(', ')} choca</b>` : '') + ` · ${TW} × ${TD} baldosas · ${L.props.length} props · ${L.agents.filter(a => a.length).length} agentes · ${(L.cams || []).length} cámaras · ${(L.lasers || []).length} láseres · ${(L.bombs || []).length} bombas · ${(L.hides || []).length} escondites`;
+    (badRoutes.length ? ` · <b class="bad">ruta ${badRoutes.join(', ')} choca</b>` : '') + ` · ${TW} × ${TD} baldosas · ${L.props.length} props · ${L.agents.filter(a => a.length).length} agentes · ${(L.cams || []).length} cámaras · ${(L.lasers || []).length} láseres · ${(L.gates || []).length} barrotes · ${(L.bombs || []).length} bombas · ${(L.hides || []).length} escondites`;
 }
 export function onLevelRebuilt() { drawRoutes(); refreshStatus(); drawEdge(); }
 export function onModeChange(m) { routeGroup.visible = edgeGuide.visible = m === 'edit'; if (m === 'edit' && pendingDraft) adoptDraft(); updateHover(); }
@@ -84,7 +85,7 @@ function drawEdge() {
 // ---------- barra de herramientas: pestañas por tema y, debajo, las herramientas de esa pestaña ----------
 // Nivel: forma del piso, salida e inicio · Props: selector de objetos · Agentes: rutas · Escondites · Borrar (aparte, en rojo)
 const TABS = { level: 'Nivel', props: 'Props', agents: 'Agentes', cams: 'Seguridad', hides: 'Escondites' };
-const TAB_OF = { floorAdd: 'level', floorOpen: 'level', floorDel: 'level', exit: 'level', callBtn: 'level', crystal: 'level', portal: 'level', entrance: 'level', player: 'level', place: 'props', route: 'agents', hide: 'hides', cam: 'cams', laser: 'cams', bomb: 'cams', erase: 'erase' };
+const TAB_OF = { glitch: 'level', floorAdd: 'level', floorOpen: 'level', floorDel: 'level', exit: 'level', callBtn: 'level', crystal: 'level', portal: 'level', entrance: 'level', player: 'level', place: 'props', route: 'agents', hide: 'hides', cam: 'cams', laser: 'cams', gate: 'cams', bomb: 'cams', erase: 'erase' };
 const TAB_TOOL = { level: 'floorAdd', props: 'place', agents: 'route', hides: 'hide', cams: 'cam', erase: 'erase' }; // herramienta al abrir la pestaña
 // grupos del selector de props (los que no estén aquí aparecen en "Otros")
 const PROP_GROUPS = { Muebles: ['desk', 'cabinet', 'micro', 'copier', 'cooler'], 'Decoración': ['plant', 'plant_s', 'trash'], Paredes: ['panel', 'muro'], Seguridad: ['rack', 'tower', 'safe'], Enemigos: ['bee'], Jefes: ['MainFrame'], Final: ['realityportal'] };
@@ -108,6 +109,7 @@ function renderToolbar() {
     <button data-tool="floorAdd" class="${on('floorAdd')}">Piso +</button>
     <button data-tool="floorOpen" class="${on('floorOpen')}">Piso abierto</button>
     <button data-tool="floorDel" class="${on('floorDel')}">Piso −</button>
+    <button data-tool="glitch" class="${on('glitch')}">Piso glitch</button>${tool === 'glitch' ? glitchTools() : ''}
     <span class="sep"></span>
     <button data-tool="exit" class="${on('exit')}">Salida</button>
     <button data-tool="callBtn" class="${on('callBtn')}">Botón ascensor</button>${G.level.callBtn ? '<button data-act="delBtn">Quitar botón</button>' : ''}
@@ -122,8 +124,9 @@ function renderToolbar() {
     + (G.level.agents[selAgent] ? `<button data-act="typeA">Hacer ${{ normal: 'rojo', red: 'vigía', vigia: 'normal' }[agentType(selAgent)]}</button>` : '')
     + `<button data-act="popW">Quitar punto</button><button data-act="delA">Borrar agente</button>`;
   else if (tab === 'hides') tools = Object.entries(HIDE_KINDS).map(([k, h]) => `<button data-hide="${k}" class="${hideKind === k ? 'on' : ''}">${h.label.replace('Escondite ', '')}</button>`).join('');
-  else if (tab === 'cams') tools = `<button data-tool="cam" class="${on('cam')}">Cámara</button><button data-tool="laser" class="${on('laser')}">Láser</button><button data-tool="bomb" class="${on('bomb')}">Bomba</button>`
-    + (tool === 'laser' ? `<button data-act="laserDir">Dirección: ${laserDir === 'x' ? '↘ ↖' : '↗ ↙'} (R)</button><span class="note">Va de pared a pared por donde hagas clic. Se prende y apaga (LASER en Settings.js).</span>`
+  else if (tab === 'cams') tools = `<button data-tool="cam" class="${on('cam')}">Cámara</button><button data-tool="laser" class="${on('laser')}">Láser</button><button data-tool="gate" class="${on('gate')}">Barrotes</button><button data-tool="bomb" class="${on('bomb')}">Bomba</button>`
+    + (tool === 'gate' ? `<button data-act="laserDir">Dirección: ${laserDir === 'x' ? '↘ ↖' : '↗ ↙'} (R)</button><span class="note">Puerta de seguridad: se cierra unos segundos cuando suena una alarma; solo frena al jugador (GATE en Settings.js).</span>`
+      : tool === 'laser' ? `<button data-act="laserDir">Dirección: ${laserDir === 'x' ? '↘ ↖' : '↗ ↙'} (R)</button><span class="note">Va de pared a pared por donde hagas clic. Se prende y apaga (LASER en Settings.js).</span>`
       : tool === 'bomb' ? `<span class="note">Cae del techo al empezar; el jugador la recoge y se la lanza al primer agente cercano (BOMB en Settings.js).</span>`
       : `<span class="note">Las cámaras barren de lado a lado; si te ven, llaman a todos los agentes (CAMERA en Settings.js).</span>`);
   else tools = `<span class="note">Clic sobre un prop, una cámara o un escondite para quitarlo · el piso se quita con Nivel › Piso −</span>`;
@@ -148,13 +151,33 @@ function propAt(x, y) { const L = G.level.props; for (let i = L.length - 1; i >=
 const tileOf = p => [Math.floor(p.x / TILE), Math.floor(p.y / TILE)];
 const FLOOR_TOOLS = { floorAdd: '1', floorOpen: '2', floorDel: '0' };   // valor que pinta cada herramienta
 // ---------- tamaño del nivel: crece al pintar fuera del borde y se recorta al quitar piso de una orilla ----------
+// piso glitch: botones de patrón y velocidad, y pintar/quitar baldosas
+const GL_PAT = { all: 'Todas juntas', wave: 'Ola', checker: 'Ajedrez' }, GL_SPD = [.6, 1, 1.5];
+const GL_SPD_N = { .6: 'lento', 1: 'normal', 1.5: 'rápido' };
+function glitchTools() {
+  const g = G.level.glitch || {};
+  return `<button data-act="glPat">Patrón: ${GL_PAT[g.pattern || 'all']}</button><button data-act="glSpd">Velocidad: ${GL_SPD_N[g.speed || 1] || g.speed}</button>`
+    + ((g.tiles || []).length ? `<button data-act="glClear">Quitar todas</button>` : '');
+}
+let glitchPaint = null;                                // al arrastrar: true = marcar, false = quitar
+function glitchAt(p, start) {
+  const [i, j] = tileOf(p), L = G.level;
+  if (i < 0 || j < 0 || j >= L.floor.length || i >= L.floor[0].length || L.floor[j][i] === '0') return;
+  const g = (L.glitch ||= { tiles: [], pattern: 'all', speed: 1 }), k = g.tiles.findIndex(([a, b]) => a === i && b === j);
+  if (start) glitchPaint = k < 0;
+  if (glitchPaint && k < 0) g.tiles.push([i, j]); else if (!glitchPaint && k >= 0) g.tiles.splice(k, 1); else return;
+  rebuild();
+}
+
 function shiftLevel(dx, dy) {          // mueve todo el contenido del nivel (en vóxeles)
   const L = G.level;
+  for (const t of L.glitch?.tiles || []) { t[0] += dx / TILE; t[1] += dy / TILE; }
   for (const p of L.props) { p.x += dx; p.y += dy; }
   for (const r of L.agents) for (const w of r) { w[0] += dx; w[1] += dy; }
   for (const h of L.hides) { h.x += dx; h.y += dy; }
   for (const c of L.cams) { c.x += dx; c.y += dy; }
   for (const l of L.lasers) { l.x += dx; l.y += dy; }
+  for (const g of L.gates || []) { g.x += dx; g.y += dy; }
   for (const b of L.bombs || []) { b.x += dx; b.y += dy; }
   L.exit.x += dx; L.exit.y += dy; L.player[0] += dx; L.player[1] += dy; if (L.entrance) { L.entrance.x += dx; L.entrance.y += dy; } if (L.callBtn) { L.callBtn.x += dx; L.callBtn.y += dy; } for (const o of [L.crystal, L.portal]) if (o) { o.x += dx; o.y += dy; }
   shiftView(dx, dy);                   // la cámara se mueve igual, así no salta la vista
@@ -180,7 +203,7 @@ function setTile(i, j, v) {
   if (v === '0') trimFloor();
   return true;
 }
-const paintAt = p => { const [i, j] = tileOf(p); if (setTile(i, j, FLOOR_TOOLS[tool])) rebuild(); };
+const paintAt = p => { if (tool === 'glitch') return glitchAt(p, false); const [i, j] = tileOf(p); if (setTile(i, j, FLOOR_TOOLS[tool])) rebuild(); };
 // la entrada: mismas reglas que la salida y sin pisarla
 const entranceOk = en => {   // pared válida, sin pisar la salida y con espacio delante para salir caminando
   if (!en || !entranceValid(en) || doorsClash(en, G.level.exit)) return false;
@@ -219,6 +242,7 @@ function updateHover() {
   const p = lastP;
   if (tool === 'place') { const [px, py] = snapPos(sel, rotN, p); showGhost(sel, rotN, px, py, fits(sel, rotN, px, py)); }
   else if (tool === 'player') { const [ox, oy] = deskOrigin([p.x, p.y]); showGhost('desk', 0, ox, oy, deskFits(ox, oy)); }
+  else if (tool === 'glitch') { const [i, j] = tileOf(p); showBox(TILE, .6, TILE, i * TILE + TILE / 2, Z + .3, -(j * TILE + TILE / 2), true); hoverBox.material.color.setHex(0x3be07c); }
   else if (tool in FLOOR_TOOLS) { const [i, j] = tileOf(p), m = tool === 'floorDel' ? 0 : 1; if (i >= -m && j >= -m && i < TW + m && j < TD + m) { showBox(TILE, .6, TILE, i * TILE + TILE / 2, Z + .3, -(j * TILE + TILE / 2), tool !== 'floorDel'); if (tool === 'floorOpen') hoverBox.material.color.setHex(0x4db8ff); } }
   else if (tool === 'exit') { const ex = exitSpotAny(p); showDoor(ex, exitOkAt(ex)); }
   else if (tool === 'entrance') { const en = entranceSpot(p); showDoor(en, entranceOk(en), 0x4db8ff); }
@@ -230,9 +254,14 @@ function updateHover() {
   else if (tool === 'laser') { const [a, b] = laserEnds(Math.floor(p.x), Math.floor(p.y), laserDir), len = Math.hypot(b[0] - a[0], b[1] - a[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
     if (laserDir === 'x') showBox(len, 14, 1, mx, Z + 8, -my, len >= 2); else showBox(1, 14, len, mx, Z + 8, -my, len >= 2); }
   else if (tool === 'bomb') { const bi = bombAt(p.x, p.y); if (bi >= 0) { const b = G.level.bombs[bi]; showBox(9, 9, 9, b.x, Z + 4.5, -b.y, false); } else showBox(BOMB.pickR * 2, .6, BOMB.pickR * 2, p.x, Z + .3, -p.y, free(p.x, p.y, 4)); }
+  else if (tool === 'gate') { const [a, b] = laserEnds(Math.floor(p.x), Math.floor(p.y), laserDir), len = Math.hypot(b[0] - a[0], b[1] - a[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    if (laserDir === 'x') showBox(len, 20, 1.5, mx, Z + 10, -my, len >= 2); else showBox(1.5, 20, len, mx, Z + 10, -my, len >= 2); }
   else if (tool === 'erase') {
     const bi = bombAt(p.x, p.y);
     if (bi >= 0) { const b = G.level.bombs[bi]; showBox(9, 9, 9, b.x, Z + 4.5, -b.y, false); return; }
+    const gi = gateAt(p.x, p.y);
+    if (gi >= 0) { const d = G.level.gates[gi], [a, b] = laserEnds(Math.floor(d.x), Math.floor(d.y), d.dir), len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (d.dir === 'x') showBox(len, 21, 2, (a[0] + b[0]) / 2, Z + 10, -(a[1] + b[1]) / 2, false); else showBox(2, 21, len, (a[0] + b[0]) / 2, Z + 10, -(a[1] + b[1]) / 2, false); return; }
     const li = laserAt(p.x, p.y);
     if (li >= 0) { const d = G.level.lasers[li], [a, b] = laserEnds(Math.floor(d.x), Math.floor(d.y), d.dir), len = Math.hypot(b[0] - a[0], b[1] - a[1]);
       if (d.dir === 'x') showBox(len, 15, 2, (a[0] + b[0]) / 2, Z + 8, -(a[1] + b[1]) / 2, false); else showBox(2, 15, len, (a[0] + b[0]) / 2, Z + 8, -(a[1] + b[1]) / 2, false); return; }
@@ -249,6 +278,7 @@ function updateHover() {
 function editClick(p) {
   const L = G.level;
   if (tool in FLOOR_TOOLS) { const [i, j] = tileOf(p); pushHist(); if (setTile(i, j, FLOOR_TOOLS[tool])) rebuild(); else hist.pop(); painting = true; }
+  else if (tool === 'glitch') { pushHist(); glitchAt(p, true); painting = true; renderToolbar(); }
   else if (tool === 'exit') { const ex = exitSpotAny(p); if (exitOkAt(ex)) change(() => L.exit = ex); }
   else if (tool === 'entrance') { const en = entranceSpot(p); if (entranceOk(en)) { change(() => L.entrance = en); renderToolbar(); } }
   else if (tool === 'crystal') { if (free(p.x, p.y, 2)) { change(() => L.crystal = { x: Math.round(p.x), y: Math.round(p.y) }); renderToolbar(); } }
@@ -257,10 +287,13 @@ function editClick(p) {
   else if (tool === 'place') { const [px, py] = snapPos(sel, rotN, p); if (fits(sel, rotN, px, py)) change(() => L.props.push({ t: sel, x: px, y: py, r: rotN })); }
   else if (tool === 'cam') { const s = camSpot(p.x, p.y); if (s) change(() => L.cams.push({ x: s.x, y: s.y, a: +s.a.toFixed(4) })); }
   else if (tool === 'laser') { const [a, b] = laserEnds(Math.floor(p.x), Math.floor(p.y), laserDir); if (Math.hypot(b[0] - a[0], b[1] - a[1]) >= 2) change(() => L.lasers.push({ x: Math.floor(p.x), y: Math.floor(p.y), dir: laserDir })); }
+  else if (tool === 'gate') { const [a, b] = laserEnds(Math.floor(p.x), Math.floor(p.y), laserDir); if (Math.hypot(b[0] - a[0], b[1] - a[1]) >= 2) change(() => (L.gates ||= []).push({ x: Math.floor(p.x), y: Math.floor(p.y), dir: laserDir })); }
   else if (tool === 'bomb') { const bi = bombAt(p.x, p.y); if (bi >= 0) change(() => L.bombs.splice(bi, 1)); else if (free(p.x, p.y, 4)) change(() => (L.bombs ||= []).push({ x: Math.round(p.x), y: Math.round(p.y) })); }
   else if (tool === 'erase') {
     const li = laserAt(p.x, p.y), ci = camAt(p.x, p.y), hi = hideAt(p.x, p.y), bi = bombAt(p.x, p.y);
+    const gi = gateAt(p.x, p.y);
     if (bi >= 0) change(() => L.bombs.splice(bi, 1));
+    else if (gi >= 0) change(() => L.gates.splice(gi, 1));
     else if (li >= 0) change(() => L.lasers.splice(li, 1));
     else if (ci >= 0) change(() => L.cams.splice(ci, 1));
     else if (hi >= 0) change(() => L.hides.splice(hi, 1));
@@ -312,6 +345,9 @@ export function initEditor() {
     else if (b.dataset.act === 'delEnt') change(() => delete L.entrance);
     else if (b.dataset.act === 'delBtn') change(() => delete L.callBtn);
     else if (b.dataset.act === 'delCrystal') change(() => delete L.crystal);
+    else if (b.dataset.act === 'glPat') { const ks = Object.keys(GL_PAT), g = (L.glitch ||= { tiles: [], pattern: 'all', speed: 1 }); change(() => g.pattern = ks[(ks.indexOf(g.pattern || 'all') + 1) % ks.length]); renderToolbar(); }
+    else if (b.dataset.act === 'glSpd') { const g = (L.glitch ||= { tiles: [], pattern: 'all', speed: 1 }); change(() => g.speed = GL_SPD[(GL_SPD.indexOf(g.speed || 1) + 1) % GL_SPD.length]); renderToolbar(); }
+    else if (b.dataset.act === 'glClear') { change(() => delete L.glitch); renderToolbar(); }
     else if (b.dataset.act === 'delPortal') change(() => delete L.portal);
     else if (['newA', 'newR', 'newV'].includes(b.dataset.act)) { tool = 'route'; change(() => { L.agents.push([]); L.agentTypes.push({ newR: 'red', newV: 'vigia' }[b.dataset.act] || 'normal'); }); selAgent = G.level.agents.length - 1; }
     else if (b.dataset.act === 'typeA' && L.agents[selAgent]) change(() => { L.agentTypes[selAgent] = { normal: 'red', red: 'vigia', vigia: 'normal' }[agentType(selAgent)]; });
@@ -326,7 +362,7 @@ export function initEditor() {
 
   addEventListener('keydown', e => {
     if (G.mode !== 'edit' || e.target.tagName === 'TEXTAREA') return;
-    if (e.code === 'KeyR') { if (tool === 'laser') laserDir = laserDir === 'x' ? 'y' : 'x'; else rotN = (rotN + 1) % 4; renderToolbar(); updateHover(); }
+    if (e.code === 'KeyR') { if (tool === 'laser' || tool === 'gate') laserDir = laserDir === 'x' ? 'y' : 'x'; else rotN = (rotN + 1) % 4; renderToolbar(); updateHover(); }
     if (e.code === 'KeyV') resetView();                                       // vista normal
     if (e.code === 'KeyZ' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undo(); }
     if (e.code === 'Delete' || e.code === 'Backspace') { tool = 'erase'; renderToolbar(); updateHover(); }

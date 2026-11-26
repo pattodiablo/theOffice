@@ -245,3 +245,25 @@ export const beeBonkSound = () => tone((a, t0) => {
   g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.18, t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .15);
   o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .17);
 });
+// piso glitch: zumbido digital cuando las baldosas empiezan a parpadear, y caída por el hueco
+export const glitchWarnSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'square';
+  for (let i = 0; i < 6; i++) o.frequency.setValueAtTime(i % 2 ? 330 : 660, t0 + i * .05);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.04, t0 + .01); g.gain.setValueAtTime(.04, t0 + .26); g.gain.exponentialRampToValueAtTime(.0001, t0 + .32);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .34);
+});
+export const glitchFallSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'sawtooth';
+  o.frequency.setValueAtTime(700, t0); o.frequency.exponentialRampToValueAtTime(60, t0 + .7);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.12, t0 + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + .75);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .78);
+});
+// barrotes de seguridad: "clanc" metálico al cerrarse (alarma)
+export const gateSound = () => tone((a, t0) => {
+  for (const [f, d] of [[220, 0], [330, .06]]) {
+    const o = a.createOscillator(), g = a.createGain(); o.type = 'triangle';
+    o.frequency.setValueAtTime(f, t0 + d); o.frequency.exponentialRampToValueAtTime(f * .7, t0 + d + .25);
+    g.gain.setValueAtTime(.0001, t0 + d); g.gain.exponentialRampToValueAtTime(.16, t0 + d + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + d + .3);
+    o.connect(g).connect(a.destination); o.start(t0 + d); o.stop(t0 + d + .32);
+  }
+});

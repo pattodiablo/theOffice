@@ -6,7 +6,9 @@ import { footstep } from '../Core/Audio.js';
 import { makeCharacter } from './Character.js';
 import { ENT_APPEAR } from '../Animations/IntroAnimation.js';
 import { pose, poseClip } from '../Animations/CharacterPoses.js';
-import { free } from '../World/Grid.js';
+import { free as gridFree } from '../World/Grid.js';
+import { gateBlocks } from './SecurityGate.js';
+const free = (x, y) => gridFree(x, y) && !gateBlocks(x, y);   // paredes + barrotes cerrados
 import { turnTo } from '../Core/MathUtils.js';
 import { keys, joy } from '../Core/Input.js';
 import { pokiPlay } from '../Core/Poki.js';

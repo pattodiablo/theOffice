@@ -133,6 +133,19 @@ export const BEE = {
   flyH: 9,                    // altura de vuelo sobre el piso
   scale: .7,                  // tamaño del modelo en el juego (1 = como en MagicaVoxel)
 };
+// Piso glitch (editor › Nivel › Piso glitch): baldosas que parpadean y desaparecen; si estás encima, caes.
+// El ciclo dura `period` segundos (÷ la velocidad que elijas en el editor): sólida → aviso → hueco.
+export const GLITCH_FLOOR = {
+  period: 4,                  // segundos de un ciclo completo (a velocidad normal)
+  solid: .5,                  // parte del ciclo en que está sólida (0.5 = la mitad)
+  warn: .2,                   // parte del ciclo en que parpadea avisando (el resto es hueco)
+  waveStep: .35,              // patrón "ola": segundos de diferencia entre una baldosa y la siguiente
+};
+// Barrotes de seguridad (editor › Seguridad › Barrotes): cuando suena una alarma (te ve un guardia o una cámara)
+// suben y cierran el paso unos segundos. Solo frenan al jugador; los guardias pasan.
+export const GATE = {
+  closeTime: 7,               // segundos que quedan cerrados después de la última alarma
+};
 // Noquear por la espalda (automático): tocar a un guardia por detrás lo deja en el piso unos segundos.
 // No funciona si ya te vio ("!") ni con el dron vigía (flota). Durante el glitch funciona aunque te mire.
 export const TAKEDOWN = {
