@@ -211,3 +211,6 @@ body:not(.game) #floorsBtn,body:not(.game) #crystals{display:none!important}
 .pop.blue{color:#7cc8ff;text-shadow:0 0 12px rgba(77,184,255,.7),0 2px 0 #031020}
 body.exiting .pop,body.caught .pop{display:none}
 @media(prefers-reduced-motion:reduce){#flash{display:none}}
+/* contador del portal de realidad (sobre el contenedor) */
+#rpNum{position:fixed;z-index:3;transform:translate(-50%,-50%);pointer-events:none;text-align:center;font:700 18px "Chakra Petch",sans-serif;color:#9fe8ff;text-shadow:0 0 10px rgba(79,210,255,.7),0 2px 0 #031620;display:none}
+#rpNum small{display:block;font-size:12px;color:#dff8ff;opacity:.85}

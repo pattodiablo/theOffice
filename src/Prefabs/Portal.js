@@ -34,12 +34,14 @@ export function syncPortal() { group.visible = !!G.level.portal; }
 // lógica (jugando): entrar al portal abierto termina el juego
 export function updatePortal(dt, p) {
   const q = G.level.portal; if (!q || !portalOpen()) return false;
-  if (Math.hypot(p.x - q.x, p.y - q.y) < PORTAL.enterR) {
-    G.mode = 'ending'; et = 0; msg = ENDING_MESSAGES[Math.random() * ENDING_MESSAGES.length | 0]; portalSound();
-    endEl.classList.add('show'); endEl.querySelector('.emsg').textContent = '';
-    return true;
-  }
+  if (Math.hypot(p.x - q.x, p.y - q.y) < PORTAL.enterR) { startEnding(); return true; }
   return false;
+}
+
+// final del juego: pantalla blanca con el mensaje (también lo usa el portal de realidad, RealityPortal.js)
+export function startEnding() {
+  G.mode = 'ending'; et = 0; msg = ENDING_MESSAGES[Math.random() * ENDING_MESSAGES.length | 0]; portalSound();
+  endEl.classList.add('show'); endEl.querySelector('.emsg').textContent = '';
 }
 
 export function animatePortal(dt) {

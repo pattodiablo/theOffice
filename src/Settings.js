@@ -89,6 +89,27 @@ export const JUICE = {
   nearMiss: 4.5,              // a qué distancia una bala cuenta como "casi me dan" (vóxeles)
   dust: true,                 // polvito al caminar
 };
+// Main Frame (prop "MainFrame", el jefe): su cruz de patas gira y dispara un láser desde cada punta
+export const MAINFRAME = {
+  wake: 48,                   // radio en el que se despierta y empieza a disparar (vóxeles)
+  spinIdle: .25,              // velocidad de giro dormido (radianes por segundo)
+  spin: .6,                   // girando mientras carga o descansa
+  spinFire: .9,               // girando mientras dispara (más rápido = más difícil)
+  chargeTime: 1.2,            // segundos de aviso: las puntas parpadean y el haz se ve tenue
+  fireTime: 4,                // segundos disparando
+  restTime: 1.5,              // segundos de descanso entre ráfagas
+  beamLen: 60,                // largo máximo de cada haz desde el centro (se corta antes en paredes y muebles altos)
+  beamY: 1.6,                 // altura del haz sobre el piso
+  hitR: 1.3,                  // qué tan cerca del haz hay que pasar para que te toque
+  hubR: 4,                    // desde dónde queman las patas al disparar (radio del centro, que es seguro)
+};
+// Noquear por la espalda (automático): tocar a un guardia por detrás lo deja en el piso unos segundos.
+// No funciona si ya te vio ("!") ni con el dron vigía (flota). Durante el glitch funciona aunque te mire.
+export const TAKEDOWN = {
+  on: true,
+  reach: 5,                   // qué tan cerca hay que llegar (vóxeles)
+  koTime: 10,                 // segundos noqueado; al despertar te busca ("?")
+};
 export const CRYSTAL = { pickR: 3.5 };
 // Bomba aturdidora (level.bombs = [{ x, y }], editor › Seguridad › Bomba): cae del techo, la recoges quedándote en su círculo,
 // la cargas sobre la cabeza y la lanzas sola al primer agente que entre en tu radio. Los agentes de la explosión quedan aturdidos.
@@ -116,7 +137,7 @@ export const SAFE = {
   popTime: .7,                // segundos que tarda el cristal en salir volando de la caja
   popDist: 7,                 // dónde cae el cristal: vóxeles delante de la puerta
 };                     // qué tan cerca hay que pasar para recogerlo
-export const PORTAL = { need: 20, enterR: 5 };             // cristales para abrir el portal · radio para entrar
+export const PORTAL = { need: 20, enterR: 5, depositR: 12 };   // cristales para abrir el portal · radio para entrar · qué tan cerca del contenedor para echar los cristales
 export const ENDING_MESSAGES = [
   'You found every piece of reality. Welcome to the real world.',
   'The code is gone. The sky is real. You are free.',

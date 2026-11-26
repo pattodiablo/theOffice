@@ -211,3 +211,14 @@ export const bombBoomSound = () => tone((a, t0) => {
   const z = a.createOscillator(), k = a.createGain(); z.type = 'sawtooth'; z.frequency.setValueAtTime(900, t0 + .02); z.frequency.exponentialRampToValueAtTime(120, t0 + .7);
   k.gain.setValueAtTime(.0001, t0 + .02); k.gain.exponentialRampToValueAtTime(.06, t0 + .05); k.gain.exponentialRampToValueAtTime(.0001, t0 + .75); z.connect(k).connect(a.destination); z.start(t0 + .02); z.stop(t0 + .76);
 });
+
+// noqueo: golpe seco y grave + "tump" del guardia al caer
+export const koSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'square'; o.frequency.setValueAtTime(220, t0); o.frequency.exponentialRampToValueAtTime(55, t0 + .12);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.25, t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .16);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .18);
+  const f = a.createOscillator(), h = a.createGain(); f.type = 'sine'; f.frequency.setValueAtTime(90, t0 + .28); f.frequency.exponentialRampToValueAtTime(40, t0 + .45);
+  h.gain.setValueAtTime(.0001, t0 + .28); h.gain.exponentialRampToValueAtTime(.3, t0 + .29); h.gain.exponentialRampToValueAtTime(.0001, t0 + .5);
+  f.connect(h).connect(a.destination); f.start(t0 + .28); f.stop(t0 + .52);
+
+});
