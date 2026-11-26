@@ -108,6 +108,9 @@ body.caught #hud,body.caught #joy{display:none!important}
 #dream.show-text .dtext{opacity:1}
 #dream .dbtns{display:flex;gap:10px;opacity:0;transform:translateY(16px);transition:opacity .35s,transform .35s}
 #dream.show-btn .dbtns{opacity:1;transform:none;pointer-events:auto}
+#dream .playbtn.revive{background:#ffcc00}
+#dream .playbtn[hidden]{display:none}
+#dream .playbtn:disabled{opacity:.5}
 @keyframes blink{50%{opacity:0}}
 @media(prefers-reduced-motion:reduce){#dream .dtext::after{animation:none}}
 

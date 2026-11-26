@@ -7,6 +7,7 @@ export const G = {
   t: 0,                // reloj global (animaciones)
   time: 0,             // tiempo del intento actual
   frozen: 0, cool: 0, usedGlitch: false,  // glitch: tiempo congelado restante · recarga
+  revived: false, grace: 0,                // ya revivió con el video en este intento · segundos invulnerable después
   alerts: 0, maxSeen: 0,
   intro: -1,           // segundos de la intro; -1 = terminada
   asm: -1,             // segundos del ensamblado del nivel (antes de la intro); -1 = armado

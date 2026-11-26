@@ -86,11 +86,18 @@ export function spawnBomb(x, y) {
   Object.assign(b, { temp: true, st: 'warn', t: 0, prog: 0, bx: x, by: y, boomT: -1 }); bombFallSound();
   return b;
 }
+// bomba de regalo (al revivir con el video): aparece ya en las manos del jugador y no vuelve
+export function giveBomb(p) {
+  if (held) return;
+  const b = makeBomb({ x: p.x, y: p.y });
+  Object.assign(b, { temp: true, st: 'lift', t: 0, prog: 0, lx: p.x, ly: p.y, bx: p.x, by: p.y, boomT: -1 });
+  held = b; G.carrying = true; bombLiftSound();
+}
 // cuántas bombas "de una vez" siguen en juego (cayendo, en el piso, cargada o volando)
 export const allBombs = () => bombs;                     // (para pruebas y para el HUD)
 export const tempBombsActive = () => bombs.filter(b => b.temp && b.st !== 'gone').length;
 function dropTemp() {                                     // al reintentar: las bombas del jefe desaparecen
-  for (const b of bombs.filter(b => b.temp)) { group.remove(b.root, b.ring, b.warn, b.shadow, b.wave, b.blast); b.bar.remove(); }
+  for (const b of bombs.filter(b => b.temp)) { group.remove(b.root, b.ring, b.warn, b.shadow, b.wave, b.blast, b.arrow); b.bar.remove(); }
   bombs = bombs.filter(b => !b.temp);
 }
 

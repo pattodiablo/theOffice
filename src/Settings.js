@@ -143,6 +143,9 @@ export const TAKEDOWN = {
 export const CRYSTAL = { pickR: 3.5 };
 // Bomba aturdidora (level.bombs = [{ x, y }], editor › Seguridad › Bomba): cae del techo, la recoges quedándote en su círculo,
 // la cargas sobre la cabeza y la lanzas sola al primer agente que entre en tu radio. Los agentes de la explosión quedan aturdidos.
+// revivir viendo un video (Poki): radio y segundos de noqueo de los guardias cercanos · segundos invulnerable
+export const REVIVE = { stunR: 30, stunTime: 5, grace: 3 };
+
 export const BOMB = {
   pickR: 6,                   // radio del círculo para recogerla (vóxeles)
   pickTime: .6,               // segundos dentro del círculo para levantarla

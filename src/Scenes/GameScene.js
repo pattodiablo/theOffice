@@ -36,7 +36,7 @@ export function setMode(m) {
   resetAgents(); resetCams(); resetRacks(); resetLasers(); resetTowers(); resetSafes(); resetBombs(); resetMainFrames(); resetBees(); resetCrystal(); Object.assign(player, { x: G.seat.x, y: G.seat.y, ang: Math.PI / 2, vx: 0, vy: 0 });
   if (G.entOk && m === 'play') { const [x, y] = G.ENT.point(5.5, .5); Object.assign(player, { x, y, ang: G.ENT.ang }); } // con entrada: espera detrás de las puertas
   resetIntro(m === 'play');
-  Object.assign(G, { time: 0, frozen: 0, cool: 0, maxSeen: 0, alerts: 0, doorOpen: 0, doorWant: false, elev: 'idle', elevT: 0, usedGlitch: false, hiddenKind: null, hideT: 0, popT: 1 }); resetHideSpots();
+  Object.assign(G, { time: 0, frozen: 0, cool: 0, maxSeen: 0, alerts: 0, doorOpen: 0, doorWant: false, elev: 'idle', elevT: 0, usedGlitch: false, revived: false, grace: 0, hiddenKind: null, hideT: 0, popT: 1 }); resetHideSpots();
   setAlarm(0); setGlitchFX(false); setMeter(0); resetJuice();
 }
 
@@ -50,7 +50,7 @@ export function showTitle() {
 
 // un frame de juego (después de la intro)
 export function updateGame(dt) {
-  G.time += dt; G.frozen = Math.max(0, G.frozen - dt); G.cool = Math.max(0, G.cool - dt);
+  G.time += dt; G.grace = Math.max(0, G.grace - dt); G.frozen = Math.max(0, G.frozen - dt); G.cool = Math.max(0, G.cool - dt);
   movePlayer(dt);
   updateCamouflage(player, dt);
   updateRacks(dt, player); updateSafes(dt, player); updateBombs(dt, player);
@@ -69,7 +69,7 @@ export function updateGame(dt) {
 
   const shotBy = G.frozen > 0 ? null : updateBullets(dt, player);  // las balas también se congelan con el glitch
   const zapped = updateLasers(dt, player) | updateTowers(dt, player) | updateMainFrames(dt, player) | updateBees(dt, player);  // láseres y torres disparando: tocarlos mata
-  if (caughtBy || shotBy || zapped) startCaught(caughtBy || shotBy || null);          // sacudón, fundido y mensaje
+  if ((caughtBy || shotBy || zapped) && G.grace <= 0) startCaught(caughtBy || shotBy || null);          // sacudón, fundido y mensaje
   else if (crossedExit(player)) startExit();           // cruzó la puerta: escena del ascensor
   updateCrystal(dt, player); updatePortal(dt, player); updateRealityPortals(dt, player);  // fragmento de realidad · portal del final
 }

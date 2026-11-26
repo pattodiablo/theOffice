@@ -10,9 +10,13 @@ import { keys } from './Input.js';
 //   pokiStop()          dejó de jugar: lo atraparon, salió por el ascensor, abrió el menú, final → gameplayStop
 //   pokiBreak()         pausa para un anuncio antes de volver a jugar (Retry, siguiente piso, elegir piso).
 //                       Silencia el audio y bloquea las teclas mientras dura; Poki decide si de verdad muestra uno.
+//   pokiReward()        video con recompensa (revivir). Devuelve true si lo vio entero.
+//   pokiCanReward()     si hay SDK para ofrecer el video (en desarrollo sin SDK: sí, y se regala, para probar)
 const sdk = () => (!EDITOR && window.PokiSDK) || null;
 let playing = false, inBreak = false;
 export const pokiBusy = () => inBreak;
+const DEV_FREE = import.meta.env.DEV;                                  // npm run dev sin SDK: la recompensa se da sola
+export const pokiCanReward = () => !!sdk() || DEV_FREE;
 
 export async function pokiInit() {
   const s = sdk(); if (!s) return;
@@ -39,4 +43,16 @@ export async function pokiBreak() {
   pause();                                                              // por si Poki no llama al callback de inicio
   try { await s.commercialBreak(pause); } catch (e) {}
   inBreak = false; setMuted(false);
+}
+
+export async function pokiReward() {
+  const s = sdk(); if (inBreak) return false;
+  if (!s) return DEV_FREE;
+  pokiStop(); inBreak = true;
+  const pause = () => { setMuted(true); for (const k in keys) keys[k] = false; };
+  pause();
+  let ok = false;
+  try { ok = !!(await s.rewardedBreak({ size: 'medium', onStart: pause })); } catch (e) {}
+  inBreak = false; setMuted(false);
+  return ok;
 }
