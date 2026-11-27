@@ -13,6 +13,7 @@ import { player } from './Player.js';
 import { agents, stunAgent } from './Agent.js';
 import { bossTargets, hitBoss } from './MainFrame.js';
 import { beeTargets, stunBee } from './Bee.js';
+import { snakeTargets, stunSnake } from './Snake.js';
 
 // Bomba aturdidora (level.bombs = [{ x, y }], se pone en el editor › Seguridad › Bomba). Ajustes en BOMB (Settings.js).
 // Ciclo de cada punto:  wait → warn (marca roja en el piso) → fall (cae del techo) → ground (se puede recoger)
@@ -22,7 +23,7 @@ import { beeTargets, stunBee } from './Bee.js';
 // entra en BOMB.throwR y lo ves, se la lanzas sola; la explosión aturde a todos los agentes en BOMB.blastR.
 // Brazos: clips "carry" (cargándola) y "throw" (lanzándola), editables en animator.html.
 const HOLD_Y = 21.5, FALL_H = 70, FACE = Math.PI / 4;   // altura sobre la cabeza · desde dónde cae · el lente mira a la cámara
-let group, bombs = [], held = null, throwT = -1, TEX;
+let group, bombs = [], held = null, throwT = -1, TEX, arrowMat;
 const v = new THREE.Vector3();
 const ADD = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending };
 const easeOut = t => 1 - (1 - t) ** 3, easeIn = t => t * t;
@@ -49,6 +50,7 @@ function makeModel() {
 
 export function initBombs(scene) {
   group = new THREE.Group(); scene.add(group);
+  arrowMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
   TEX = { glow: glowTex([[0, 'rgba(255,255,255,1)'], [.25, 'rgba(150,230,255,.8)'], [1, 'rgba(60,170,255,0)']]),
           shadow: glowTex([[0, 'rgba(0,0,0,.55)'], [.7, 'rgba(0,0,0,.35)'], [1, 'rgba(0,0,0,0)']]) };
 }
@@ -69,9 +71,12 @@ function makeBomb(p) {
     const wave = new THREE.Mesh(new THREE.RingGeometry(.86, 1, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x9feaff, ...ADD }));
     const blast = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, ...ADD }));
     for (const m of [ring, warn, shadow, wave]) m.renderOrder = 2;
+    // flecha que la señala (como la de los escondites, en amarillo): "¡recógela!"
+    const arrow = new THREE.Group();
+    arrow.add(new THREE.Mesh(new THREE.ConeGeometry(1.9, 2.6, 4).rotateX(Math.PI).rotateY(Math.PI / 4), arrowMat), new THREE.Mesh(new THREE.BoxGeometry(1, 2.4, 1).translate(0, 2.4, 0), arrowMat));
     const bar = document.createElement('div'); bar.className = 'hidebar use'; bar.innerHTML = '<i></i>'; document.body.append(bar);
-    group.add(root, ring, warn, shadow, wave, blast);
-    const b = { sx: p.x, sy: p.y, x: p.x, y: p.y, root, eye, ring, warn, shadow, wave, blast, bar };
+    group.add(root, ring, warn, shadow, wave, blast, arrow);
+    const b = { sx: p.x, sy: p.y, x: p.x, y: p.y, arrow, root, eye, ring, warn, shadow, wave, blast, bar };
     bombs.push(b); return b;
   }
 }
@@ -82,11 +87,18 @@ export function spawnBomb(x, y) {
   Object.assign(b, { temp: true, st: 'warn', t: 0, prog: 0, bx: x, by: y, boomT: -1 }); bombFallSound();
   return b;
 }
+// bomba de regalo (al revivir con el video): aparece ya en las manos del jugador y no vuelve
+export function giveBomb(p) {
+  if (held) return;
+  const b = makeBomb({ x: p.x, y: p.y });
+  Object.assign(b, { temp: true, st: 'lift', t: 0, prog: 0, lx: p.x, ly: p.y, bx: p.x, by: p.y, boomT: -1 });
+  held = b; G.carrying = true; bombLiftSound();
+}
 // cuántas bombas "de una vez" siguen en juego (cayendo, en el piso, cargada o volando)
 export const allBombs = () => bombs;                     // (para pruebas y para el HUD)
 export const tempBombsActive = () => bombs.filter(b => b.temp && b.st !== 'gone').length;
 function dropTemp() {                                     // al reintentar: las bombas del jefe desaparecen
-  for (const b of bombs.filter(b => b.temp)) { group.remove(b.root, b.ring, b.warn, b.shadow, b.wave, b.blast); b.bar.remove(); }
+  for (const b of bombs.filter(b => b.temp)) { group.remove(b.root, b.ring, b.warn, b.shadow, b.wave, b.blast, b.arrow); b.bar.remove(); }
   bombs = bombs.filter(b => !b.temp);
 }
 
@@ -106,6 +118,10 @@ function throwTarget() {
     const d = Math.hypot(e.x - player.x, e.y - player.y);
     if (d < bd && rayDist(player.x, player.y, Math.atan2(e.y - player.y, e.x - player.x), d, 12) >= d - 2) { bd = d; best = e; }
   }
+  for (const e of snakeTargets()) {                       // serpientes robot (a la cabeza)
+    const d = Math.hypot(e.x - player.x, e.y - player.y);
+    if (d < bd && rayDist(player.x, player.y, Math.atan2(e.y - player.y, e.x - player.x), d, 12) >= d - 2) { bd = d; best = e; }
+  }
   for (const a of agents) {
     if (!a.path.length || a.state === 'ko') continue;
     const d = Math.hypot(a.x - player.x, a.y - player.y);
@@ -121,6 +137,7 @@ function explode(b) {
   let n = 0, boss = false;
   for (const a of agents) if (a.path.length && Math.hypot(a.x - x, a.y - y) < BOMB.blastR) { stunAgent(a, BOMB.stunTime, x, y); n++; }
   for (const e of beeTargets()) if (Math.hypot(e.x - x, e.y - y) < BOMB.blastR) { stunBee(e, BOMB.stunTime); n++; }
+  for (const e of snakeTargets()) if (Math.hypot(e.x - x, e.y - y) < BOMB.blastR) { stunSnake(e, BOMB.stunTime); n++; }
   for (const m of bossTargets()) if (Math.hypot(m.x - x, m.y - y) < BOMB.blastR + 6) { hitBoss(m); boss = true; }   // +6: el cuerpo del jefe es grande
   if (!boss) popText(x, y, n ? (n > 1 ? `${n} STUNNED!` : 'STUNNED!') : 'MISSED!', n ? 'cyan' : 'red');
 }
@@ -174,6 +191,8 @@ export function animateBombs(dt) {
     b.root.visible = ['fall', 'ground', 'lift', 'held', 'flying'].includes(st) && !(G.asm >= 0);
     b.warn.visible = b.shadow.visible = st === 'warn' || st === 'fall';
     b.ring.visible = st === 'ground' && !held;
+    b.arrow.visible = st === 'ground' && !held && !edit && b.prog <= 0;           // mientras la recoges ya no hace falta
+    if (b.arrow.visible) { b.arrow.position.set(b.x, Z + 15 + Math.sin(G.t * 4 + b.x) * 1.3, -b.y); b.arrow.rotation.y = G.t * 1.5; }
     const bob = Math.sin(G.t * 3 + b.x) * .25;
     if (st === 'warn' || st === 'fall') {                            // marca roja que se cierra + sombra que crece
       const k = st === 'warn' ? b.t / BOMB.warnTime : 1, f = st === 'fall' ? easeIn(Math.min(1, b.t / BOMB.dropTime)) : 0;

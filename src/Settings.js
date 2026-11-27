@@ -19,8 +19,11 @@ export const SEE_THROUGH_ALPHA = .25;                      // cuánto se sigue v
 
 // ---- Ambientación verde ----
 export const GREEN_TINT = .22, CODE_RAIN = false;          // tinte verde sobre la imagen · lluvia de código de fondo
-// Colores de la paleta que se vuelven verdes al cargar (los .vox no cambian): pantallas, lámparas y vidrios.
-export const GREEN_LOOK = { '60,80,110': [30, 170, 80], '245,250,255': [205, 255, 220], '150,155,160': [120, 170, 135], '170,205,235': [110, 195, 145], '215,235,250': [185, 255, 210] };
+// Colores de la paleta que cambian al cargar (los .vox no cambian): pantallas, lámparas y vidrios se vuelven verdes,
+// y las baldosas del piso (214,218,222 y 196,201,206) bajan a un tono medio: así las paredes claras, el jugador (blanco),
+// los agentes (negro), los conos y los círculos del piso se leen mejor. Para volver al piso claro, borra las dos últimas.
+export const GREEN_LOOK = { '60,80,110': [30, 170, 80], '245,250,255': [205, 255, 220], '150,155,160': [120, 170, 135], '170,205,235': [110, 195, 145], '215,235,250': [185, 255, 210],
+  '214,218,222': [140, 157, 148], '196,201,206': [124, 141, 132] };
 
 // ---- Agentes ----
 export const PATROL_SPEED = 10.5;
@@ -118,6 +121,22 @@ export const MAINFRAME = {
   crystalTime: 1,             // segundos de vuelo del cristal
   crystalDist: 20,            // dónde cae: a esta distancia del centro, hacia donde estás tú
 };
+// Serpiente robot (level.snakes = [{ x, y }], editor › Seguridad › Serpiente): se mueve como en el juego Snake, de
+// casilla en casilla y girando solo en ángulo recto, con el cuerpo siguiendo a la cabeza. Patrulla cerca de donde la pusiste;
+// si te ve, se pone roja y te persigue eligiendo en cada casilla el giro que más la acerca. Si la cabeza te toca, te atrapa.
+// No puede atravesar su propio cuerpo; si se encierra, se da vuelta (la cola pasa a ser la cabeza).
+export const SNAKE = {
+  cell: 4,                    // tamaño de la casilla (vóxeles; una baldosa = 8)
+  step: .26,                  // segundos por casilla patrullando
+  huntStep: .17,              // segundos por casilla persiguiéndote
+  len: 8,                     // segmentos del cuerpo
+  range: 32,                  // a qué distancia te ve (las paredes y muebles altos la tapan)
+  lostTime: 2.5,              // segundos que te sigue buscando después de perderte de vista
+  wander: 36,                 // qué tan lejos de su lugar se aleja patrullando
+  turnChance: .22,            // probabilidad de girar en cada casilla al patrullar (si no, sigue derecho)
+  hitR: 3.6,                  // qué tan cerca tiene que pasar la cabeza para atraparte
+};
+
 // Abeja robot (prop "bee"): revolotea cerca de donde la pusiste; si te ve dentro de su rango, zumba, marca en el piso
 // la línea por donde va a pasar y te embiste en línea recta. Si te toca, te atrapa. Si choca contra una pared queda mareada.
 export const BEE = {
@@ -133,6 +152,43 @@ export const BEE = {
   flyH: 9,                    // altura de vuelo sobre el piso
   scale: .7,                  // tamaño del modelo en el juego (1 = como en MagicaVoxel)
 };
+// Piso glitch (editor › Nivel › Piso glitch): baldosas que parpadean y desaparecen; si estás encima, caes.
+// El ciclo dura `period` segundos (÷ la velocidad que elijas en el editor): sólida → aviso → hueco.
+export const GLITCH_FLOOR = {
+  period: 4,                  // segundos de un ciclo completo (a velocidad normal)
+  solid: .5,                  // parte del ciclo en que está sólida (0.5 = la mitad)
+  warn: .2,                   // parte del ciclo en que parpadea avisando (el resto es hueco)
+  waveStep: .35,              // patrón "ola": segundos de diferencia entre una baldosa y la siguiente
+};
+// Barrotes de seguridad (editor › Seguridad › Barrotes): cuando suena una alarma (te ve un guardia o una cámara)
+// suben y cierran el paso unos segundos. Solo frenan al jugador; los guardias pasan.
+export const GATE = {
+  closeTime: 7,               // segundos que quedan cerrados después de la última alarma
+};
+// Flechas guía (Prefabs/GuideArrows.js): en estos pisos una flecha 3D señala la caja fuerte, luego el cristal y,
+// si el piso tiene portal de realidad, dónde echarlo. Otra flecha en el piso junto al jugador apunta hacia allá.
+export const GUIDE = {
+  levels: ['piso1', 'piso2', 'piso3'],
+  far: 16,                    // a partir de esta distancia aparece la flecha del piso junto al jugador
+};
+// Sombreros (skins) y monedas. Los modelos están en public/hats/<id>.vox (tools/generar_sombreros.py crea los de base).
+// Se compran con monedas en el ascensor (debajo del dial de pisos) y se eligen ahí mismo.
+// Las monedas se ganan UNA vez por piso: por terminarlo, por traer su cristal y por pasarlo sin que suene ninguna alarma.
+export const HATS = {
+  sink: 1.2,                  // cuánto se hunde el sombrero en la cabeza (unidades del juego)
+  startCoins: 0,              // monedas al empezar una partida nueva
+  coins: { done: 1, crystal: 1, clean: 1 },
+  list: [                     // id = nombre del archivo .vox · price = monedas (0 = gratis desde el inicio)
+    { id: 'gorra', name: 'Cap', price: 1 },
+    { id: 'fiesta', name: 'Party hat', price: 2 },
+    { id: 'pirata', name: 'Pirate hat', price: 2 },
+    { id: 'sombrero', name: 'Sombrero', price: 2 },
+    { id: 'casco', name: 'Hard hat', price: 3 },
+    { id: 'cono', name: 'Traffic cone', price: 3 },
+    { id: 'copa', name: 'Top hat', price: 4 },
+    { id: 'corona', name: 'Crown', price: 6 },
+  ],
+};
 // Noquear por la espalda (automático): tocar a un guardia por detrás lo deja en el piso unos segundos.
 // No funciona si ya te vio ("!") ni con el dron vigía (flota). Durante el glitch funciona aunque te mire.
 export const TAKEDOWN = {
@@ -143,6 +199,9 @@ export const TAKEDOWN = {
 export const CRYSTAL = { pickR: 3.5 };
 // Bomba aturdidora (level.bombs = [{ x, y }], editor › Seguridad › Bomba): cae del techo, la recoges quedándote en su círculo,
 // la cargas sobre la cabeza y la lanzas sola al primer agente que entre en tu radio. Los agentes de la explosión quedan aturdidos.
+// revivir viendo un video (Poki): radio y segundos de noqueo de los guardias cercanos · segundos invulnerable
+export const REVIVE = { stunR: 30, stunTime: 5, grace: 3 };
+
 export const BOMB = {
   pickR: 6,                   // radio del círculo para recogerla (vóxeles)
   pickTime: .6,               // segundos dentro del círculo para levantarla
@@ -168,6 +227,33 @@ export const SAFE = {
   popDist: 7,                 // dónde cae el cristal: vóxeles delante de la puerta
 };                     // qué tan cerca hay que pasar para recogerlo
 export const PORTAL = { need: 0, enterR: 5, depositR: 12 };    // cristales para abrir el portal (0 = uno por piso: tantos como pisos haya) · radio para entrar · qué tan cerca del contenedor para echar los cristales
+// El Observador: la conciencia del sueño (la anti-realidad). A veces baja del techo colgado de un cable, te mira con su lente
+// y anota cosas en su cuaderno, como estudiándote. No te atrapa (por ahora): es la presencia que vigila el experimento.
+//   chance   probabilidad de que aparezca en cada intento de un piso (0 = nunca, 1 = siempre)
+//   delay    segundos de juego antes de bajar (al azar entre los dos)
+//   stay     segundos que se queda anotando · descend / ascend: segundos que tarda en bajar / subir
+//   hover    altura a la que flota (vóxeles sobre el piso) · dist: qué tan lejos de ti se pone (entre los dos)
+export const OBSERVER = { chance: .5, delay: [9, 22], stay: 7, descend: 1.8, ascend: 1.3, hover: 27, dist: [15, 24], subject: '0417' };
+// lo que anota. Elige según lo que estés haciendo; {n} = número. Escritas en inglés como el resto del juego.
+export const OBSERVER_NOTES = {
+  any: ['Subject still believes the office is real.', 'Heart rate elevated. Fascinating.', 'Subject walks like it has somewhere to be.',
+        'Reminder: add more desks.', 'Day 9,412 of the experiment. Nothing to report.', 'Subject has not noticed the ceiling. Good.',
+        'The sunglasses are a nice touch. Useless, but nice.', 'Subject keeps looking for an exit. Adorable.'],
+  hidden: ['Subject is pretending to be furniture. Convincing.', 'Hiding. As predicted.', 'Subject has become one with the office plant.'],
+  seen: ['Subject was spotted {n} time(s). Sloppy.', 'The agents saw you. I saw them see you.', 'Alarm count: {n}. Noted. Underlined.'],
+  retry: ['Attempt #{n}. Subject does not learn.', 'Attempt #{n}. I admire the persistence. Almost.', 'We have done this {n} times now.'],
+  glitch: ['Subject bends time. Must patch that.', 'Unauthorized time freeze detected. Interesting.'],
+  crystal: ['Subject is carrying a fragment of reality. Concerning.', 'It found a crystal. It should not have found a crystal.'],
+  bomb: ['Subject is holding an explosive. Above its head. Bold.'],
+  slow: ['Subject is taking its time. I have eternity.', '{n} seconds and still on this floor.'],
+};
+
+// intro de la primera partida: pantalla blanca, "Z Z Z" y uno de estos mensajes (al azar) antes del piso 1
+export const INTRO_MESSAGES = [
+  'Is this reality... or just another dream?',
+  'You have been asleep for a very long time.',
+  'Wake up. The office is not what it seems.',
+];
 export const ENDING_MESSAGES = [
   'You found every piece of reality. Welcome to the real world.',
   'The code is gone. The sky is real. You are free.',

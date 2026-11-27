@@ -40,7 +40,7 @@ export function makeCharacter(scene, agent, red = false) {
     box(head, .3, .3, 1.2, 0x5a3a2a, 3.05, 1.2, 0);
   }
   if (red) { root.traverse(o => { if (o.material?.color?.getHex() === 0x8a121c) o.material = redCoat; }); box(armR, 3, .9, .9, 0x15171a, 1.1, -5.2, 0); } // gabardina roja y arma
-  root.userData.character = true; scene.add(root); return { root, body, head, legL, legR, armL, armR };
+  root.userData.character = true; scene.add(root); return { root, body, head, legL, legR, armL, armR, headTop: [0, agent ? 6.8 : 7.2, 0] };
 }
 
 // ---------- personajes desde .vox ----------
@@ -112,6 +112,7 @@ function fromVox(parts) {
   for (const b of BONES.slice(1)) {
     const main = parts.find(p => p.name === b);
     pivots[b] = joint(main.vox, b === 'head' ? -1 : 1);
+    if (b === 'head') { const [tx, ty, tz] = joint(main.vox, 1); ch.headTop = [(tx - pivots.head[0]) * VOX_SCALE, (tz - pivots.head[2]) * VOX_SCALE, -(ty - pivots.head[1]) * VOX_SCALE]; }   // donde se apoya el sombrero
     const g = new THREE.Group(), [px, py, pz] = pivots[b];
     g.position.set(px * VOX_SCALE, pz * VOX_SCALE, -py * VOX_SCALE); body.add(g); ch[b] = g;
   }

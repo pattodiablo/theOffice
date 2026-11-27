@@ -4,15 +4,19 @@ import { PLAYER_SPEED, GLITCH_TIME, GLITCH_COOLDOWN, STEP_VOLUME, STEP_TIME, ANI
 import { dust } from '../FX/Particles.js';
 import { footstep } from '../Core/Audio.js';
 import { makeCharacter } from './Character.js';
+import { wearHat } from './Hats.js';
 import { ENT_APPEAR } from '../Animations/IntroAnimation.js';
 import { pose, poseClip } from '../Animations/CharacterPoses.js';
-import { free } from '../World/Grid.js';
+import { free as gridFree } from '../World/Grid.js';
+import { gateBlocks } from './SecurityGate.js';
+const free = (x, y) => gridFree(x, y) && !gateBlocks(x, y);   // paredes + barrotes cerrados
 import { turnTo } from '../Core/MathUtils.js';
 import { keys, joy } from '../Core/Input.js';
+import { pokiPlay } from '../Core/Poki.js';
 
 // Jugador (el oficinista): movimiento y glitch.
 export const player = { ch: null, x: 0, y: 0, ang: Math.PI / 4, moving: false, stepT: 0, vx: 0, vy: 0 }; // vx, vy: velocidad (la usan los agentes rojos para adelantarse)
-export function initPlayer(scene) { player.ch = makeCharacter(scene, false); }
+export function initPlayer(scene) { player.ch = makeCharacter(scene, false); wearHat(player.ch); }
 
 export function doGlitch() { if (G.mode !== 'play' || G.cool > 0) return; G.frozen = GLITCH_TIME; G.cool = GLITCH_COOLDOWN; G.usedGlitch = true; }
 
@@ -24,6 +28,7 @@ export function movePlayer(dt) {
   const mx = (ix - iy) * Math.SQRT1_2, my = (ix + iy) * Math.SQRT1_2;
   player.moving = il > .15;
   const ox = player.x, oy = player.y;
+  if (player.moving) pokiPlay();                                  // Poki: empieza a jugar con su primer movimiento
   if (!player.moving) { player.stepT = 0; player.vx *= .8; player.vy *= .8; return; }
   if ((player.stepT -= dt) <= 0) {                               // pasos
     player.stepT = STEP_TIME;

@@ -1,13 +1,14 @@
 import { $ } from './Constants.js';
 import { G } from './Game.js';
 import { stage } from './Engine.js';
+import { pokiBusy } from './Poki.js';
 
 // Entrada: teclas apretadas y joystick táctil (aparece donde tocas la pantalla).
 export const keys = {};
 export const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 };
 
 export function initInput() {
-  addEventListener('keydown', e => { if (e.target.tagName !== 'TEXTAREA') keys[e.code] = true; });
+  addEventListener('keydown', e => { if (e.target.tagName !== 'TEXTAREA' && !pokiBusy()) keys[e.code] = true; });   // durante un anuncio no hay teclas
   addEventListener('keyup', e => keys[e.code] = false);
   const el = $('#joy'), knob = $('#joy b');
   stage.addEventListener('pointerdown', e => {

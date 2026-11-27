@@ -1,9 +1,12 @@
 // Sonidos sintetizados con Web Audio (sin archivos).
 let actx;
 // los navegadores arrancan el audio en pausa hasta que el jugador toca o aprieta algo
-const unlock = () => { try { actx ||= new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch (e) {} };
+const unlock = () => { if (muted) return; try { actx ||= new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch (e) {} };
 for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, unlock, { passive: true });
-function tone(fn) { try { actx ||= new (window.AudioContext || window.webkitAudioContext)(); fn(actx, actx.currentTime); } catch (e) {} }
+// silencio total (lo usa la pausa para anuncios de Poki)
+let muted = false;
+export function setMuted(m) { muted = m; try { if (actx) m ? actx.suspend() : actx.resume(); } catch (e) {} }
+function tone(fn) { if (muted) return; try { actx ||= new (window.AudioContext || window.webkitAudioContext)(); fn(actx, actx.currentTime); } catch (e) {} }
 
 export const ring = () => tone((a, t0) => { // timbre de teléfono (intro)
   for (let i = 0; i < 2; i++) for (const f of [440, 480]) {
@@ -241,4 +244,50 @@ export const beeBonkSound = () => tone((a, t0) => {
   o.frequency.setValueAtTime(180, t0); o.frequency.exponentialRampToValueAtTime(70, t0 + .12);
   g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.18, t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .15);
   o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .17);
+});
+// piso glitch: zumbido digital cuando las baldosas empiezan a parpadear, y caída por el hueco
+export const glitchWarnSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'square';
+  for (let i = 0; i < 6; i++) o.frequency.setValueAtTime(i % 2 ? 330 : 660, t0 + i * .05);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.04, t0 + .01); g.gain.setValueAtTime(.04, t0 + .26); g.gain.exponentialRampToValueAtTime(.0001, t0 + .32);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .34);
+});
+export const glitchFallSound = () => tone((a, t0) => {
+  const o = a.createOscillator(), g = a.createGain(); o.type = 'sawtooth';
+  o.frequency.setValueAtTime(700, t0); o.frequency.exponentialRampToValueAtTime(60, t0 + .7);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.12, t0 + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + .75);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + .78);
+});
+// barrotes de seguridad: "clanc" metálico al cerrarse (alarma)
+export const gateSound = () => tone((a, t0) => {
+  for (const [f, d] of [[220, 0], [330, .06]]) {
+    const o = a.createOscillator(), g = a.createGain(); o.type = 'triangle';
+    o.frequency.setValueAtTime(f, t0 + d); o.frequency.exponentialRampToValueAtTime(f * .7, t0 + d + .25);
+    g.gain.setValueAtTime(.0001, t0 + d); g.gain.exponentialRampToValueAtTime(.16, t0 + d + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + d + .3);
+    o.connect(g).connect(a.destination); o.start(t0 + d); o.stop(t0 + d + .32);
+  }
+});
+
+// el Observador: servo que baja (o sube) por el cable y garabatos del lápiz en el cuaderno
+export const servoSound = (down = true) => tone((a, t0) => {
+  const o = a.createOscillator(), f = a.createBiquadFilter(), g = a.createGain(); o.type = 'sawtooth'; f.type = 'lowpass'; f.frequency.value = 900;
+  o.frequency.setValueAtTime(down ? 220 : 120, t0); o.frequency.exponentialRampToValueAtTime(down ? 110 : 240, t0 + 1.2);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.05, t0 + .1); g.gain.setValueAtTime(.05, t0 + 1); g.gain.exponentialRampToValueAtTime(.0001, t0 + 1.3);
+  o.connect(f).connect(g).connect(a.destination); o.start(t0); o.stop(t0 + 1.35);
+});
+export const scribbleSound = () => tone((a, t0) => {
+  const n = a.createBufferSource(), b = a.createBuffer(1, a.sampleRate * .09 | 0, a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const f = a.createBiquadFilter(), g = a.createGain(); f.type = 'bandpass'; f.frequency.value = 2600 + Math.random() * 1600; f.Q.value = 1.5; g.gain.value = .05;
+  n.buffer = b; n.connect(f).connect(g).connect(a.destination); n.start(t0);
+});
+
+// serpiente robot: siseo eléctrico al verte
+export const hissSound = () => tone((a, t0) => {
+  const n = a.createBufferSource(), b = a.createBuffer(1, a.sampleRate * .5 | 0, a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.min(1, i / 600) * (1 - i / d.length);
+  const f = a.createBiquadFilter(), g = a.createGain(); f.type = 'highpass'; f.frequency.value = 3800; g.gain.value = .09;
+  const o = a.createOscillator(), og = a.createGain(); o.type = 'square'; o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(70, t0 + .35);
+  og.gain.setValueAtTime(.03, t0); og.gain.exponentialRampToValueAtTime(.0001, t0 + .4);
+  n.buffer = b; n.connect(f).connect(g).connect(a.destination); o.connect(og).connect(a.destination); n.start(t0); o.start(t0); o.stop(t0 + .45);
 });

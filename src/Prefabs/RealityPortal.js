@@ -11,6 +11,10 @@ import { crystalSound } from '../Core/Audio.js';
 import { puff } from '../FX/Particles.js';
 import { shake, kick, flash, popText } from '../FX/Juice.js';
 import { startEnding } from './Portal.js';
+import { pokiMeasureOnce } from '../Core/Poki.js';
+import { player } from './Player.js';
+import { pose, poseClip } from '../Animations/CharacterPoses.js';
+import { clipDuration } from '../Animations/Clips.js';
 
 // Portal de realidad (prop "realityportal", modelo assets/vox/props/realityportal.vox: partes "base" y "plataforma").
 // Pensado para el piso 1. Al acercarte al contenedor (el cilindro de vidrio de la derecha), los cristales que juntaste
@@ -76,6 +80,12 @@ export function syncRealityPortals() {
 }
 
 export const online = () => depositedCount() >= crystalsNeeded();
+// para las flechas guía: contenedor del portal y cuántos cristales te faltan echar
+export const portalTank = () => portals[0] ? { x: portals[0].tank.x, y: portals[0].tank.y, h: TANK.z1 } : null;
+export const pendingDeposit = () => carried() - depositedCount() - flying.length;
+
+// en el piso del portal, el ascensor queda bloqueado mientras tengas cristales sin echar al contenedor (ExitDoor.js)
+export const crystalsToDrop = () => portals.length && !online() ? Math.max(0, carried() - depositedCount()) : 0;
 // cristales que tienes para echar: los de pisos terminados + el que recogiste en este piso (todavía no terminado)
 const carried = () => crystalCount() + (G.gotCrystal && !G.hadCrystal && !hasCrystal(G.levelName) ? 1 : 0);
 
@@ -88,14 +98,54 @@ export function updateRealityPortals(dt, p) {
       const m = new THREE.Mesh(flyGeo, flyMat); group.add(m);
       flying.push({ m, q, t: 0, from: { x: p.x, y: p.y, z: Z + 22 } }); cool = .32;
     }
-    if (online() && Math.hypot(p.x - q.front.x, p.y - q.front.y) < PORTAL.enterR) { startEnding(); return true; }
+    if (online() && Math.hypot(p.x - q.front.x, p.y - q.front.y) < PORTAL.enterR) { startFarewell(q); return true; }
   }
   return false;
+}
+
+// despedida antes del final: se da vuelta hacia la cámara, saluda con la mano (clip "wave") y entra caminando al portal.
+// G.mode = 'farewell' mientras dura (el juego queda quieto). Después, startEnding.
+const CAM_ANG = -Math.PI / 4, FW = { turn: .45, walk: 1 };   // mirando a la cámara · segundos para girar y para entrar
+let farewell = null;
+const lerpAng = (a, b, k) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
+function startFarewell(q) {
+  G.mode = 'farewell'; G.hiddenKind = null;
+  farewell = { q, t: 0, x: player.x, y: player.y, ang: player.ang, done: false };
+}
+// cada frame, después de las animaciones del jugador (las reemplaza)
+// para desvanecer solo al jugador: copias transparentes de sus materiales (los originales se comparten con los agentes)
+function setAlpha(ch, a) {
+  ch.root.traverse(o => {
+    if (!o.isMesh) return;
+    if (a >= 1) { if (o.userData.fwMat) { o.material.dispose(); o.material = o.userData.fwMat; delete o.userData.fwMat; o.castShadow = true; } return; }
+    if (!o.userData.fwMat) { o.userData.fwMat = o.material; o.material = o.material.clone(); o.material.transparent = true; }
+    o.material.opacity = a; o.castShadow = a > .5;
+  });
+}
+export function updateFarewell(dt) {
+  if (G.mode === 'ending' && farewell) { player.ch.root.visible = false; return; }          // ya entró: no reaparece detrás de la pantalla final
+  if (G.mode !== 'farewell' || !farewell) { if (farewell) setAlpha(player.ch, 1); farewell = null; return; }
+  const f = farewell, ch = player.ch, wave = clipDuration('wave') || 2, t = (f.t += dt);
+  ch.root.visible = true; ch.root.scale.setScalar(1);
+  if (t < FW.turn) {                                                      // girar hacia la cámara
+    const k = t / FW.turn; player.ang = lerpAng(f.ang, CAM_ANG, k * k * (3 - 2 * k));
+    pose(ch, f.x, f.y, player.ang, G.t, false);
+  } else if (t < FW.turn + wave) {                                        // chau, chau
+    player.ang = CAM_ANG; poseClip(ch, f.x, f.y, CAM_ANG, 'wave', t - FW.turn);
+  } else {                                                                // se da vuelta, camina hacia el portal y se desvanece en la luz
+    const k = Math.min(1, (t - FW.turn - wave) / FW.walk), h = f.q.hole, to = Math.atan2(h.y - f.y, h.x - f.x), w = k * .6;   // no llega a meterse en el marco
+    player.ang = lerpAng(CAM_ANG, to, Math.min(1, k * 4));
+    player.x = f.x + (h.x - f.x) * w; player.y = f.y + (h.y - f.y) * w;
+    pose(ch, player.x, player.y, player.ang, G.t, true);
+    const a = 1 - Math.min(1, Math.max(0, (k - .25) / .65)); setAlpha(ch, a); ch.root.visible = a > .01;
+    if (k >= 1 && !f.done) { f.done = true; startEnding(); }
+  }
 }
 
 export function animateRealityPortals(dt) {
   const on = online();
   if (on && !wasOnline && G.mode === 'play') {                   // ¡se encendió!
+    pokiMeasureOnce('portal', 'online', 'reached');                   // Poki: juntó y echó todos los cristales
     const q = portals[0]; shake(1); kick(.12); flash('127,220,255', .45); if (q) popText(q.hole.x, q.hole.y, 'PORTAL ONLINE', 'cyan');
   }
   wasOnline = on;

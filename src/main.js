@@ -17,14 +17,21 @@ import { initRacks, animateRacks } from './Prefabs/ServerRack.js';
 import { initLasers, animateLasers } from './Prefabs/LaserGate.js';
 import { initTowers, animateTowers } from './Prefabs/SensorTower.js';
 import { initSafes, animateSafes } from './Prefabs/Safe.js';
+import { initGuideArrows, animateGuideArrows } from './Prefabs/GuideArrows.js';
 import { initBombs, animateBombs } from './Prefabs/Bomb.js';
 import { initMainFrames, animateMainFrames } from './Prefabs/MainFrame.js';
 import { initBees, animateBees } from './Prefabs/Bee.js';
+import { initSnakes, animateSnakes } from './Prefabs/Snake.js';
+import { initGlitchFloor, animateGlitchFloor } from './Prefabs/GlitchFloor.js';
+import { initGates, animateGates } from './Prefabs/SecurityGate.js';
 import { initCrystal, animateCrystal } from './Prefabs/Crystal.js';
 import { initPortal, animatePortal } from './Prefabs/Portal.js';
-import { initRealityPortals, animateRealityPortals } from './Prefabs/RealityPortal.js';
+import { initObserver, animateObserver } from './Prefabs/Observer.js';
+import { initRealityPortals, animateRealityPortals, updateFarewell } from './Prefabs/RealityPortal.js';
 import { initFloorSelect, openFloors, goToLevel } from './UI/FloorSelect.js';
-import { hasProgress, nextToPlay, crystalCount, setFloorCount } from './Data/Progress.js';
+import { initTutorial } from './UI/Tutorial.js';
+import { hasProgress, nextToPlay, crystalCount, setFloorCount, introSeen, markIntroSeen } from './Data/Progress.js';
+import { dreamIntro } from './UI/DreamIntro.js';
 import { countLevels, loadLevelNamed } from './Data/LevelIO.js';
 import { initBullets } from './Prefabs/Bullet.js';
 import { initHideSpots, animateHideSpots } from './Prefabs/HideSpot.js';
@@ -32,6 +39,7 @@ import { initExitDoor, updateExitDoor } from './Prefabs/ExitDoor.js';
 import { updateIntro } from './Animations/IntroAnimation.js';
 import { loadClips } from './Animations/Clips.js';
 import { loadCharacterModels } from './Prefabs/Character.js';
+import { loadHats } from './Prefabs/Hats.js';
 import { updateSeeThrough } from './FX/SeeThrough.js';
 import { updateAssembly, setAssemblyScene, preRender, postRender } from './FX/Assemble.js';
 import { worldMesh } from './World/Grid.js';
@@ -44,6 +52,11 @@ import { initGameScene, updateGame, setMode } from './Scenes/GameScene.js';
 import { initEditor, startEditor } from './Scenes/EditorScene.js';
 import { initElevator, initFloors, updateElevator, elevatorShown, renderElevator } from './Scenes/ElevatorScene.js';
 import { initCaught, updateCaught } from './Scenes/CaughtScene.js';
+import { pokiInit, pokiLoaded, pokiStop } from './Core/Poki.js';
+// fuentes incluidas en el build (Poki bloquea las peticiones externas, como Google Fonts)
+// fuentes: Google Fonts en index.html (Pages)
+// fuentes: Google Fonts en index.html (Pages)
+// fuentes: Google Fonts en index.html (Pages)
 
 // Punto de entrada: carga los datos, crea los objetos de la escena y arranca el bucle.
 main();
@@ -61,10 +74,10 @@ function lazyLoad() {
 }
 
 async function main() {
-  loadStep(.1, 'LOADING OFFICE');
+  loadStep(.05, 'LOADING OFFICE'); await pokiInit();
   G.DATA = await (await fetch('data/office.json')).json();
   initPalette(G.DATA.colors); initMaterials(); initProps(G.DATA);
-  loadStep(.4, 'LOADING PEOPLE'); await Promise.all([loadClips(), loadCharacterModels()]);
+  loadStep(.4, 'LOADING PEOPLE'); await Promise.all([loadClips(), loadCharacterModels(), loadHats()]);
   loadStep(.7, 'LOADING FLOOR');
   // si ya jugaste antes (y la dirección no pide un piso), retoma en el primer piso que no terminaste
   let start = LEVEL_NAME; const pre = (LEVEL_NAME.match(/^(.*?)\d+$/) || [0, 'piso'])[1];
@@ -77,16 +90,19 @@ async function main() {
 
   initCodeRain(); initScreenFX(); initEngine();
   initWorldMesh(scene); initParticles(scene); initStartDesk(scene); initPlayer(scene);
-  initAgents(scene); initCams(scene); initRacks(scene); initLasers(scene); initTowers(scene); initSafes(scene); initBombs(scene); initMainFrames(scene); initBees(scene); initCrystal(scene); initJuice();
+  initAgents(scene); initCams(scene); initRacks(scene); initLasers(scene); initTowers(scene); initSafes(scene); initGuideArrows(scene); initBombs(scene); initObserver(scene); initMainFrames(scene); initBees(scene); initSnakes(scene); initGlitchFloor(scene); initGates(scene); initCrystal(scene); initJuice();
   initPortal(scene, { restart: () => goToLevel(pre + '1') }); initRealityPortals(scene); initBullets(scene); initHideSpots(scene); initExitDoor(scene);
-  initInput(); initGameScene(); initCaught(); initFloorSelect(); if (EDITOR) initEditor();
+  initInput(); initGameScene(); initCaught(); initFloorSelect(); initTutorial(); if (EDITOR) initEditor();
   document.getElementById('floorsBtn').addEventListener('click', openFloors);
 
   loadStep(.9, 'BUILDING'); setAssemblyScene(scene, worldMesh); rebuild();
-  if (EDITOR) startEditor(); else setMode('play');        // sin pantalla de título: el nivel arranca directo
-  startLoop(frame); loadStep(1, 'READY');
+  // primera partida: intro "soñando" (blanco, Z Z Z, mensaje) y después el piso 1. Si no, el nivel arranca directo.
+  const dream = !EDITOR && !introSeen() && !hasProgress() && !new URLSearchParams(location.search).has('nivel');
+  if (EDITOR) startEditor(); else if (dream) G.mode = 'dream'; else setMode('play');
+  startLoop(frame); loadStep(1, 'READY'); pokiLoaded();
   requestAnimationFrame(() => requestAnimationFrame(hideLoader));
   lazyLoad();
+  if (dream) { await dreamIntro(); markIntroSeen(); setMode('play'); }   // el nivel se arma mientras el blanco se desvanece
 }
 
 // un frame: lógica (intro o juego) y luego animaciones, efectos y cámara
@@ -94,10 +110,11 @@ function frame(dt) {
   const real = dt; dt = gameDt(dt);                         // hitstop / cámara lenta (Juice): solo el juego, la UI sigue normal
   G.t += dt;
   if (G.mode === 'play') { if (G.asm >= 0) updateAssembly(dt, scene, worldMesh, player.ch.root); else if (G.intro >= 0) updateIntro(dt); else updateGame(dt); }
+  if (G.mode !== 'play') pokiStop();                       // atrapado, ascensor, menú, final: ya no está jugando
   animatePlayer(); animateBombs(dt);                       // bombas después del jugador: le levantan los brazos al cargarlas
   updateStartDesk(); updateBubble(cam, stage); updateExitDoor(dt); updateCodeRain(dt);
-  updateParticles(dt); animateHideSpots(dt, player);
-  animateAgents(); animateCams(); animateRacks(); animateLasers(); animateTowers(dt); animateSafes(dt); animateMainFrames(dt); animateBees(dt); animateCrystal(); animatePortal(dt); animateRealityPortals(dt);
+  updateParticles(dt); animateHideSpots(dt, player); updateFarewell(dt);   // la despedida del final reemplaza la pose del jugador
+  animateAgents(); animateCams(); animateRacks(); animateLasers(); animateTowers(dt); animateSafes(dt); animateMainFrames(dt); animateBees(dt); animateSnakes(dt); animateGlitchFloor(dt); animateGates(); animateObserver(dt, player); animateCrystal(); animatePortal(dt); animateRealityPortals(dt); animateGuideArrows(dt);
   const cEl = document.getElementById('crystals'); cEl.textContent = `◆ ${crystalCount() + (G.gotCrystal && !G.hadCrystal ? 1 : 0)}`; cEl.classList.toggle('got', !!G.gotCrystal);
   updateElevator(real); updateCaught(real); updateJuice(real, cam, stage);
   updateCamera(real, player); updateSeeThrough(dt, player);

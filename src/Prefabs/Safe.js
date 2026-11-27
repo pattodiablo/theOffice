@@ -144,6 +144,8 @@ export function animateSafes(dt) {
   if (c && c.open) c.t = Math.min(SAFE.popTime, c.t + dt);
 }
 
+// para las flechas guía: la caja que guarda el cristal mientras siga cerrada
+export const guideSafe = () => { const s = safes.find(s => s.hasCrystal); return s && !s.open ? { x: s.cx, y: s.cy, h: s.h } : null; };
 // dónde está el cristal de la caja: null si sigue cerrada; { x, y, hop, ready } mientras sale volando y cuando ya cayó
 export function safeCrystalPos() {
   const c = G.safeCrystal; if (!c || !c.open) return null;

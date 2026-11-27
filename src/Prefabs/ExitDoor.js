@@ -8,6 +8,7 @@ import { doorSound, callBeep, arrivalChime } from '../Core/Audio.js';
 import { M } from '../Materials/Materials.js';
 import { box } from './Character.js';
 import { bossTargets } from './MainFrame.js';
+import { crystalsToDrop } from './RealityPortal.js';
 import { popText, shake, haptic } from '../FX/Juice.js';
 
 // Puerta EXIT: dos hojas de vidrio corredizas. El nivel termina solo al cruzarla.
@@ -20,8 +21,10 @@ const v = new THREE.Vector3();
 // Botón para llamar al ascensor: por defecto a la derecha de la puerta. Si el nivel tiene level.callBtn ({ x, y, a }:
 // punto del piso junto a la pared y hacia dónde mira, se coloca en el editor), el botón va ahí y el de la puerta no existe.
 const customBtn = () => G.level && G.level.callBtn;
-// en un piso con jefe (Main Frame), el ascensor está bloqueado hasta derrotarlo
-export const exitLocked = () => bossTargets().length > 0;
+// ascensor bloqueado: en un piso con jefe (Main Frame) hasta derrotarlo; en el piso del portal de realidad
+// hasta echar al contenedor todos los cristales que traes
+const lockReason = () => bossTargets().length > 0 ? 'LOCKED: DEFEAT THE MAIN FRAME' : crystalsToDrop() > 0 ? 'LOCKED: DROP YOUR CRYSTALS IN THE PORTAL' : '';
+export const exitLocked = () => !!lockReason();
 let lockMsgT = 0, wasLocked = false;
 const callSpot = () => { const b = customBtn(); if (b) return { x: b.x + Math.cos(b.a) * 1.5, y: b.y + Math.sin(b.a) * 1.5 };
   const [x, y] = G.EXIT.point(14.5, -4); return { x, y }; };                      // dónde pararse para llamar
@@ -68,11 +71,11 @@ export function updateElevatorCall(dt, p) {
   const s = callSpot();
   lockMsgT -= dt;
   const locked = exitLocked();
-  if (wasLocked && !locked) { popText(s.x, s.y, 'ELEVATOR UNLOCKED', 'cyan'); arrivalChime(); }   // derrotaste al jefe
+  if (wasLocked && !locked) { popText(s.x, s.y, 'ELEVATOR UNLOCKED', 'cyan'); arrivalChime(); }   // derrotaste al jefe o echaste los cristales
   wasLocked = locked;
   if (locked) {                                    // bloqueado: avisa si intentas llamarlo
     if (Math.hypot(p.x - s.x, p.y - s.y) < CALL_R && lockMsgT <= 0) {
-      lockMsgT = 2.5; popText(s.x, s.y, 'LOCKED: DEFEAT THE MAIN FRAME', 'red'); shake(.3); haptic(30); callBeep();
+      lockMsgT = 2.5; popText(s.x, s.y, lockReason(), 'red'); shake(.3); haptic(30); callBeep();
     }
     return;
   }
