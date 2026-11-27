@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { EDITOR, $ } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
 import { WAKE_MESSAGES } from '../Settings.js';
-import { markDone } from '../Data/Progress.js';
+import { markDone, allCollected } from '../Data/Progress.js';
 import { showDial, hideDial, fragmentsText } from '../UI/FloorSelect.js';
 import { COIN } from '../UI/HatShop.js';
 import { renderer, stage, CAM_OFF } from '../Core/Engine.js';
@@ -163,6 +163,11 @@ export function resetExit() {
 }
 
 // juega el piso elegido en el dial (en el editor se repite el mismo nivel, ya cargado)
+// piso que sigue: el siguiente; con todos los pisos y cristales, el 1 (ahí está el portal del final)
+function nextAfter(name) {
+  const pre = (name.match(/^(.*?)\d+$/) || [0, 'piso'])[1];
+  return allCollected(pre, levelCount) ? pre + 1 : nextLevelName(name) || name;
+}
 async function playLevel(name) {
   if (loading) return; loading = true;
   await pokiBreak();                     // Poki: anuncio entre pisos (si toca)
@@ -207,7 +212,7 @@ export function updateElevator(dt) {
       if (n >= msg.length && ex >= T_MSG + msg.length * CHAR_TIME + .3 && !rewardEl.classList.contains('show-play')) {
         done = true; rewardEl.classList.add('show-play');
         if (EDITOR) playBtn.focus();
-        else { rewardEl.querySelector('.rsub').innerHTML = fragmentsText() + earnedHTML(); showDial(rewardEl.querySelector('.mid'), nextLevelName(G.levelName) || G.levelName, playLevel); }
+        else { rewardEl.querySelector('.rsub').innerHTML = fragmentsText() + earnedHTML(); showDial(rewardEl.querySelector('.mid'), nextAfter(G.levelName), playLevel); }
       }
     }
   }

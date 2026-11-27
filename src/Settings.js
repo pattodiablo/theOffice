@@ -202,6 +202,12 @@ export const SAFE = {
   popDist: 7,                 // dónde cae el cristal: vóxeles delante de la puerta
 };                     // qué tan cerca hay que pasar para recogerlo
 export const PORTAL = { need: 0, enterR: 5, depositR: 12 };    // cristales para abrir el portal (0 = uno por piso: tantos como pisos haya) · radio para entrar · qué tan cerca del contenedor para echar los cristales
+// intro de la primera partida: pantalla blanca, "Z Z Z" y uno de estos mensajes (al azar) antes del piso 1
+export const INTRO_MESSAGES = [
+  'Is this reality... or just another dream?',
+  'You have been asleep for a very long time.',
+  'Wake up. The office is not what it seems.',
+];
 export const ENDING_MESSAGES = [
   'You found every piece of reality. Welcome to the real world.',
   'The code is gone. The sky is real. You are free.',

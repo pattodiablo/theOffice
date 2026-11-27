@@ -26,7 +26,8 @@ import { initCrystal, animateCrystal } from './Prefabs/Crystal.js';
 import { initPortal, animatePortal } from './Prefabs/Portal.js';
 import { initRealityPortals, animateRealityPortals, updateFarewell } from './Prefabs/RealityPortal.js';
 import { initFloorSelect, openFloors, goToLevel } from './UI/FloorSelect.js';
-import { hasProgress, nextToPlay, crystalCount, setFloorCount } from './Data/Progress.js';
+import { hasProgress, nextToPlay, crystalCount, setFloorCount, introSeen, markIntroSeen } from './Data/Progress.js';
+import { dreamIntro } from './UI/DreamIntro.js';
 import { countLevels, loadLevelNamed } from './Data/LevelIO.js';
 import { initBullets } from './Prefabs/Bullet.js';
 import { initHideSpots, animateHideSpots } from './Prefabs/HideSpot.js';
@@ -91,10 +92,13 @@ async function main() {
   document.getElementById('floorsBtn').addEventListener('click', openFloors);
 
   loadStep(.9, 'BUILDING'); setAssemblyScene(scene, worldMesh); rebuild();
-  if (EDITOR) startEditor(); else setMode('play');        // sin pantalla de título: el nivel arranca directo
+  // primera partida: intro "soñando" (blanco, Z Z Z, mensaje) y después el piso 1. Si no, el nivel arranca directo.
+  const dream = !EDITOR && !introSeen() && !hasProgress() && !new URLSearchParams(location.search).has('nivel');
+  if (EDITOR) startEditor(); else if (dream) G.mode = 'dream'; else setMode('play');
   startLoop(frame); loadStep(1, 'READY'); pokiLoaded();
   requestAnimationFrame(() => requestAnimationFrame(hideLoader));
   lazyLoad();
+  if (dream) { await dreamIntro(); markIntroSeen(); setMode('play'); }   // el nivel se arma mientras el blanco se desvanece
 }
 
 // un frame: lógica (intro o juego) y luego animaciones, efectos y cámara

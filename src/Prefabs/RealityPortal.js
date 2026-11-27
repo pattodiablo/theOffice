@@ -79,6 +79,8 @@ export function syncRealityPortals() {
 }
 
 export const online = () => depositedCount() >= crystalsNeeded();
+// en el piso del portal, el ascensor queda bloqueado mientras tengas cristales sin echar al contenedor (ExitDoor.js)
+export const crystalsToDrop = () => portals.length && !online() ? Math.max(0, carried() - depositedCount()) : 0;
 // cristales que tienes para echar: los de pisos terminados + el que recogiste en este piso (todavía no terminado)
 const carried = () => crystalCount() + (G.gotCrystal && !G.hadCrystal && !hasCrystal(G.levelName) ? 1 : 0);
 

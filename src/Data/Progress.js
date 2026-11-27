@@ -38,10 +38,20 @@ export function buyHat(id) {
 // el piso n (1, 2, 3…) está abierto si es el primero o si terminaste el anterior
 export const unlocked = (prefix, n) => n <= 1 || !!(P.levels[prefix + (n - 1)] && P.levels[prefix + (n - 1)].done);
 // el primer piso sin terminar (para retomar donde quedaste)
-export function nextToPlay(prefix, count) { for (let n = 1; n <= count; n++) if (!(P.levels[prefix + n] && P.levels[prefix + n].done)) return prefix + n; return prefix + count; }
+// juego completo: todos los pisos terminados y todos los cristales → falta echarlos al portal del piso 1
+export const allCollected = (prefix, count) => crystalCount() >= crystalsNeeded() && Array.from({ length: count }, (_, i) => P.levels[prefix + (i + 1)]).every(l => l && l.done);
+// el primer piso sin terminar (para retomar donde quedaste). Con todo completo: el piso 1, para terminar el juego en el portal
+export function nextToPlay(prefix, count) {
+  if (allCollected(prefix, count)) return prefix + 1;
+  for (let n = 1; n <= count; n++) if (!(P.levels[prefix + n] && P.levels[prefix + n].done)) return prefix + n;
+  return prefix + count;
+}
 // cristales que ya echaste al contenedor del portal de realidad (nunca más que los que juntaste)
 export const depositedCount = () => Math.min(P.deposited || 0, crystalCount() + 1);   // +1: el cristal del piso que estás jugando se puede echar antes de terminarlo
 export function depositOne(max = crystalCount()) { P.deposited = Math.min((P.deposited || 0) + 1, max); save(); }
+// la intro "soñando" se ve una sola vez (Borrar datos la vuelve a mostrar)
+export const introSeen = () => !!P.intro;
+export function markIntroSeen() { P.intro = true; save(); }
 export function resetProgress() { stopEndingTest(); P = { levels: {} }; save(); }
 
 // editor › "Probar final": progreso de mentira con todos los cristales (sin echar al contenedor). No se guarda;
