@@ -25,9 +25,9 @@ const hist = [];
 const ROUTE_COLORS = [0xff4d4d, 0xffb020, 0x4db8ff, 0xc77dff, 0xff7ac6, 0x9cff57];
 const hex = c => '#' + c.toString(16).padStart(6, '0');
 const TIPS = {
-  place: 'Clic en el piso para colocar · R rota · botón derecho: girar la vista (V la endereza)', erase: 'Clic sobre un prop para borrarlo', player: 'Clic donde empieza el jugador (con su escritorio)',
+  place: 'Clic en el piso para colocar · R rota · botón derecho: girar la vista (V la endereza)', erase: 'Clic sobre un prop o una baldosa glitch para borrarlo', player: 'Clic donde empieza el jugador (con su escritorio)',
   route: 'Clic para agregar puntos a la ruta del agente seleccionado', gate: 'Clic en el piso para poner barrotes de pared a pared · R cambia la dirección · Borrar los quita', laser: 'Clic en el piso para tender un láser de pared a pared · R cambia la dirección · Borrar lo quita', cam: 'Clic junto a una pared (del fondo o del costado) para colgar una cámara · Borrar la quita', bomb: 'Clic en el piso para poner un punto donde cae una bomba · clic sobre una para quitarla', hide: 'Clic para poner una zona de camuflaje · Borrar la quita',
-  floorAdd: 'Clic o arrastra para agregar piso con paredes · pinta fuera del borde (línea punteada) para agrandar el nivel', floorOpen: 'Clic o arrastra para poner piso abierto, sin paredes ni barandas · fuera del borde agranda el nivel', floorDel: 'Clic o arrastra para quitar piso · las orillas vacías se recortan solas', glitch: 'Clic o arrastra sobre el piso para marcar baldosas glitch (parpadean y desaparecen; si el jugador está encima, cae) · clic en una marcada la quita', exit: 'Clic junto a una pared (del fondo o del costado) para poner la salida; el botón del ascensor queda a su derecha',
+  floorAdd: 'Clic o arrastra para agregar piso con paredes · pinta fuera del borde (línea punteada) para agrandar el nivel', floorOpen: 'Clic o arrastra para poner piso abierto, sin paredes ni barandas · fuera del borde agranda el nivel', floorDel: 'Clic o arrastra para quitar piso · las orillas vacías se recortan solas', glitch: 'Clic o arrastra sobre el piso para marcar baldosas glitch (parpadean y desaparecen; si el jugador está encima, cae) · clic en una marcada la quita (también Borrar, o pintar piso encima)', exit: 'Clic junto a una pared (del fondo o del costado) para poner la salida; el botón del ascensor queda a su derecha',
   crystal: 'Clic en el piso para poner el cristal (fragmento de realidad) de este piso',
   portal: 'Clic en el piso para poner el portal de salida de la Matrix (se abre con todos los cristales)',
   callBtn: 'Clic junto a una pared para poner el botón que llama al ascensor (reemplaza al de la puerta)',
@@ -169,6 +169,14 @@ function glitchAt(p, start) {
   rebuild();
 }
 
+// quita la marca glitch de una baldosa (queda el piso normal debajo). Devuelve true si había una.
+function unglitch(i, j) {
+  const g = G.level.glitch, k = g ? g.tiles.findIndex(([a, b]) => a === i && b === j) : -1;
+  if (k < 0) return false;
+  g.tiles.splice(k, 1); if (!g.tiles.length) delete G.level.glitch; return true;
+}
+const glitchTileAt = p => { const [i, j] = tileOf(p); return (G.level.glitch?.tiles || []).some(([a, b]) => a === i && b === j) ? [i, j] : null; };
+
 function shiftLevel(dx, dy) {          // mueve todo el contenido del nivel (en vóxeles)
   const L = G.level;
   for (const t of L.glitch?.tiles || []) { t[0] += dx / TILE; t[1] += dy / TILE; }
@@ -203,7 +211,7 @@ function setTile(i, j, v) {
   if (v === '0') trimFloor();
   return true;
 }
-const paintAt = p => { if (tool === 'glitch') return glitchAt(p, false); const [i, j] = tileOf(p); if (setTile(i, j, FLOOR_TOOLS[tool])) rebuild(); };
+const paintAt = p => { if (tool === 'glitch') return glitchAt(p, false); const [i, j] = tileOf(p), ug = unglitch(i, j); if (setTile(i, j, FLOOR_TOOLS[tool]) || ug) rebuild(); };   // pintar piso encima de un glitch lo reemplaza
 // la entrada: mismas reglas que la salida y sin pisarla
 const entranceOk = en => {   // pared válida, sin pisar la salida y con espacio delante para salir caminando
   if (!en || !entranceValid(en) || doorsClash(en, G.level.exit)) return false;
@@ -269,7 +277,9 @@ function updateHover() {
     if (ci >= 0) { const c = G.level.cams[ci]; showBox(5, 22, 5, c.x, Z + 11, -c.y, false); return; }
     const hi = hideAt(p.x, p.y);
     if (hi >= 0) { const h = G.level.hides[hi]; showBox(HIDE_R * 2, 10, HIDE_R * 2, h.x, Z + 5, -h.y, false); return; }
-    const i = propAt(p.x, p.y); if (i < 0) return; const q = G.level.props[i], Rr = rot(q.t, q.r);
+    const i = propAt(p.x, p.y);
+    if (i < 0) { const gt = glitchTileAt(p); if (gt) showBox(TILE, .6, TILE, gt[0] * TILE + TILE / 2, Z + .3, -(gt[1] * TILE + TILE / 2), false); return; }   // baldosa glitch
+    const q = G.level.props[i], Rr = rot(q.t, q.r);
     showBox(Rr.w + .4, Rr.h + .4, Rr.d + .4, q.x + Rr.w / 2, Z + Rr.h / 2, -(q.y + Rr.d / 2), false);
   }
 }
@@ -277,7 +287,7 @@ function updateHover() {
 // ---------- clic con cada herramienta ----------
 function editClick(p) {
   const L = G.level;
-  if (tool in FLOOR_TOOLS) { const [i, j] = tileOf(p); pushHist(); if (setTile(i, j, FLOOR_TOOLS[tool])) rebuild(); else hist.pop(); painting = true; }
+  if (tool in FLOOR_TOOLS) { const [i, j] = tileOf(p); pushHist(); const ug = unglitch(i, j); if (setTile(i, j, FLOOR_TOOLS[tool]) || ug) { rebuild(); renderToolbar(); } else hist.pop(); painting = true; }
   else if (tool === 'glitch') { pushHist(); glitchAt(p, true); painting = true; renderToolbar(); }
   else if (tool === 'exit') { const ex = exitSpotAny(p); if (exitOkAt(ex)) change(() => L.exit = ex); }
   else if (tool === 'entrance') { const en = entranceSpot(p); if (entranceOk(en)) { change(() => L.entrance = en); renderToolbar(); } }
@@ -297,7 +307,10 @@ function editClick(p) {
     else if (li >= 0) change(() => L.lasers.splice(li, 1));
     else if (ci >= 0) change(() => L.cams.splice(ci, 1));
     else if (hi >= 0) change(() => L.hides.splice(hi, 1));
-    else { const i = propAt(p.x, p.y); if (i >= 0) change(() => L.props.splice(i, 1)); }
+    else { const i = propAt(p.x, p.y), gt = glitchTileAt(p);
+      if (i >= 0) change(() => L.props.splice(i, 1));
+      else if (gt) change(() => unglitch(gt[0], gt[1]));                    // baldosa glitch → piso normal
+    }
   }
   else if (tool === 'hide') { if (free(p.x, p.y, 3)) change(() => L.hides.push({ x: Math.round(p.x), y: Math.round(p.y), k: hideKind })); }
   else if (tool === 'player') { const [ox, oy] = deskOrigin([p.x, p.y]); if (deskFits(ox, oy)) change(() => L.player = [ox + SEAT[0], oy + SEAT[1]]); }
