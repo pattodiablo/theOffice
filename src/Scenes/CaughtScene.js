@@ -10,6 +10,7 @@ import { pokiBreak, pokiBusy, pokiReward, pokiCanReward, pokiMeasure } from '../
 import { levelNumber } from '../Data/LevelIO.js';
 import { agents, stunAgent } from '../Prefabs/Agent.js';
 import { beeTargets, stunBee } from '../Prefabs/Bee.js';
+import { snakeTargets, stunSnake } from '../Prefabs/Snake.js';
 import { giveBomb } from '../Prefabs/Bomb.js';
 import { clearBullets } from '../Prefabs/Bullet.js';
 import { puff } from '../FX/Particles.js';
@@ -53,6 +54,7 @@ function revive() {
   G.frozen = 0; G.hiddenKind = null; clearBullets();
   for (const a of agents) if (a.path.length && Math.hypot(a.x - player.x, a.y - player.y) < REVIVE.stunR) stunAgent(a, REVIVE.stunTime, player.x, player.y);
   for (const e of beeTargets()) if (Math.hypot(e.x - player.x, e.y - player.y) < REVIVE.stunR) stunBee(e, REVIVE.stunTime);
+  for (const e of snakeTargets()) if (Math.hypot(e.x - player.x, e.y - player.y) < REVIVE.stunR) stunSnake(e, REVIVE.stunTime);
   giveBomb(player);
   puff(player.x, player.y); kick(.1); flash('59,224,124', .35); haptic([30, 30, 60]);
   popText(player.x, player.y, 'REVIVED!', 'cyan');

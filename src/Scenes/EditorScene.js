@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { W, D, Z, TILE, TW, TD, LEVEL_NAME, MIN_TILES, MAX_TILES, $ } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
-import { HIDE_R, HIDE_KINDS, BOMB } from '../Settings.js';
+import { HIDE_R, HIDE_KINDS, BOMB, SNAKE } from '../Settings.js';
+const snapSnake = v => (Math.floor(v / SNAKE.cell) + .5) * SNAKE.cell;   // centro de la casilla de la serpiente
 import { renderer, scene, cam, stage, shiftView, rotateView, resetView } from '../Core/Engine.js';
 import { M } from '../Materials/Materials.js';
 import { PROPS, rot, propGeo } from '../Data/PropLibrary.js';
@@ -26,7 +27,7 @@ const ROUTE_COLORS = [0xff4d4d, 0xffb020, 0x4db8ff, 0xc77dff, 0xff7ac6, 0x9cff57
 const hex = c => '#' + c.toString(16).padStart(6, '0');
 const TIPS = {
   place: 'Clic en el piso para colocar · R rota · botón derecho: girar la vista (V la endereza)', erase: 'Clic sobre un prop o una baldosa glitch para borrarlo', player: 'Clic donde empieza el jugador (con su escritorio)',
-  route: 'Clic para agregar puntos a la ruta del agente seleccionado', gate: 'Clic en el piso para poner barrotes de pared a pared · R cambia la dirección · Borrar los quita', laser: 'Clic en el piso para tender un láser de pared a pared · R cambia la dirección · Borrar lo quita', cam: 'Clic junto a una pared (del fondo o del costado) para colgar una cámara · Borrar la quita', bomb: 'Clic en el piso para poner un punto donde cae una bomba · clic sobre una para quitarla', hide: 'Clic para poner una zona de camuflaje · Borrar la quita',
+  route: 'Clic para agregar puntos a la ruta del agente seleccionado', gate: 'Clic en el piso para poner barrotes de pared a pared · R cambia la dirección · Borrar los quita', laser: 'Clic en el piso para tender un láser de pared a pared · R cambia la dirección · Borrar lo quita', cam: 'Clic junto a una pared (del fondo o del costado) para colgar una cámara · Borrar la quita', bomb: 'Clic en el piso para poner un punto donde cae una bomba · clic sobre una para quitarla', snake: 'Clic en el piso para poner una serpiente robot · clic sobre una para quitarla', hide: 'Clic para poner una zona de camuflaje · Borrar la quita',
   floorAdd: 'Clic o arrastra para agregar piso con paredes · pinta fuera del borde (línea punteada) para agrandar el nivel', floorOpen: 'Clic o arrastra para poner piso abierto, sin paredes ni barandas · fuera del borde agranda el nivel', floorDel: 'Clic o arrastra para quitar piso · las orillas vacías se recortan solas', glitch: 'Clic o arrastra sobre el piso para marcar baldosas glitch (parpadean y desaparecen; si el jugador está encima, cae) · clic en una marcada la quita (también Borrar, o pintar piso encima)', exit: 'Clic junto a una pared (del fondo o del costado) para poner la salida; el botón del ascensor queda a su derecha',
   crystal: 'Clic en el piso para poner el cristal (fragmento de realidad) de este piso',
   portal: 'Clic en el piso para poner el portal de salida de la Matrix (se abre con todos los cristales)',
@@ -60,7 +61,7 @@ function refreshStatus() {
   $('#status').innerHTML = `Camino al EXIT: <b class="${ok ? '' : 'bad'}">${!G.exitOk ? 'falta la salida' : ok ? 'libre' : 'bloqueado'}</b>` +
     ` · ${L.props.some(p => p.t.startsWith('MainFrame')) ? '◆ cristal: lo suelta el jefe' : L.props.some(p => p.t === 'safe') ? '◆ cristal en la caja fuerte' : L.crystal ? '◆ cristal' : '<b class="bad">sin cristal</b>'}${L.portal ? ' · portal' : ''}` +
     (L.entrance ? ` · inicio: <b class="${G.entOk ? '' : 'bad'}">${G.entOk ? 'entrada' : 'entrada inválida'}</b>` : '') +
-    (badRoutes.length ? ` · <b class="bad">ruta ${badRoutes.join(', ')} choca</b>` : '') + ` · ${TW} × ${TD} baldosas · ${L.props.length} props · ${L.agents.filter(a => a.length).length} agentes · ${(L.cams || []).length} cámaras · ${(L.lasers || []).length} láseres · ${(L.gates || []).length} barrotes · ${(L.bombs || []).length} bombas · ${(L.hides || []).length} escondites`;
+    (badRoutes.length ? ` · <b class="bad">ruta ${badRoutes.join(', ')} choca</b>` : '') + ` · ${TW} × ${TD} baldosas · ${L.props.length} props · ${L.agents.filter(a => a.length).length} agentes · ${(L.cams || []).length} cámaras · ${(L.lasers || []).length} láseres · ${(L.gates || []).length} barrotes · ${(L.bombs || []).length} bombas · ${(L.snakes || []).length} serpientes · ${(L.hides || []).length} escondites`;
 }
 export function onLevelRebuilt() { drawRoutes(); refreshStatus(); drawEdge(); }
 export function onModeChange(m) { routeGroup.visible = edgeGuide.visible = m === 'edit'; if (m === 'edit' && pendingDraft) adoptDraft(); updateHover(); }
@@ -85,7 +86,7 @@ function drawEdge() {
 // ---------- barra de herramientas: pestañas por tema y, debajo, las herramientas de esa pestaña ----------
 // Nivel: forma del piso, salida e inicio · Props: selector de objetos · Agentes: rutas · Escondites · Borrar (aparte, en rojo)
 const TABS = { level: 'Nivel', props: 'Props', agents: 'Agentes', cams: 'Seguridad', hides: 'Escondites' };
-const TAB_OF = { glitch: 'level', floorAdd: 'level', floorOpen: 'level', floorDel: 'level', exit: 'level', callBtn: 'level', crystal: 'level', portal: 'level', entrance: 'level', player: 'level', place: 'props', route: 'agents', hide: 'hides', cam: 'cams', laser: 'cams', gate: 'cams', bomb: 'cams', erase: 'erase' };
+const TAB_OF = { glitch: 'level', floorAdd: 'level', floorOpen: 'level', floorDel: 'level', exit: 'level', callBtn: 'level', crystal: 'level', portal: 'level', entrance: 'level', player: 'level', place: 'props', route: 'agents', hide: 'hides', cam: 'cams', laser: 'cams', gate: 'cams', bomb: 'cams', snake: 'cams', erase: 'erase' };
 const TAB_TOOL = { level: 'floorAdd', props: 'place', agents: 'route', hides: 'hide', cams: 'cam', erase: 'erase' }; // herramienta al abrir la pestaña
 // grupos del selector de props (los que no estén aquí aparecen en "Otros")
 const PROP_GROUPS = { Muebles: ['desk', 'cabinet', 'micro', 'copier', 'cooler'], 'Decoración': ['plant', 'plant_s', 'trash'], Paredes: ['panel', 'muro'], Seguridad: ['rack', 'tower', 'safe'], Enemigos: ['bee'], Jefes: ['MainFrame'], Final: ['realityportal'] };
@@ -124,9 +125,10 @@ function renderToolbar() {
     + (G.level.agents[selAgent] ? `<button data-act="typeA">Hacer ${{ normal: 'rojo', red: 'vigía', vigia: 'normal' }[agentType(selAgent)]}</button>` : '')
     + `<button data-act="popW">Quitar punto</button><button data-act="delA">Borrar agente</button>`;
   else if (tab === 'hides') tools = Object.entries(HIDE_KINDS).map(([k, h]) => `<button data-hide="${k}" class="${hideKind === k ? 'on' : ''}">${h.label.replace('Escondite ', '')}</button>`).join('');
-  else if (tab === 'cams') tools = `<button data-tool="cam" class="${on('cam')}">Cámara</button><button data-tool="laser" class="${on('laser')}">Láser</button><button data-tool="gate" class="${on('gate')}">Barrotes</button><button data-tool="bomb" class="${on('bomb')}">Bomba</button>`
+  else if (tab === 'cams') tools = `<button data-tool="cam" class="${on('cam')}">Cámara</button><button data-tool="laser" class="${on('laser')}">Láser</button><button data-tool="gate" class="${on('gate')}">Barrotes</button><button data-tool="bomb" class="${on('bomb')}">Bomba</button><button data-tool="snake" class="${on('snake')}">Serpiente</button>`
     + (tool === 'gate' ? `<button data-act="laserDir">Dirección: ${laserDir === 'x' ? '↘ ↖' : '↗ ↙'} (R)</button><span class="note">Puerta de seguridad: se cierra unos segundos cuando suena una alarma; solo frena al jugador (GATE en Settings.js).</span>`
       : tool === 'laser' ? `<button data-act="laserDir">Dirección: ${laserDir === 'x' ? '↘ ↖' : '↗ ↙'} (R)</button><span class="note">Va de pared a pared por donde hagas clic. Se prende y apaga (LASER en Settings.js).</span>`
+      : tool === 'snake' ? `<span class="note">Serpiente robot: patrulla moviéndose como en Snake; si te ve, te persigue. Clic sobre una la quita (SNAKE en Settings.js).</span>`
       : tool === 'bomb' ? `<span class="note">Cae del techo al empezar; el jugador la recoge y se la lanza al primer agente cercano (BOMB en Settings.js).</span>`
       : `<span class="note">Las cámaras barren de lado a lado; si te ven, llaman a todos los agentes (CAMERA en Settings.js).</span>`);
   else tools = `<span class="note">Clic sobre un prop, una cámara o un escondite para quitarlo · el piso se quita con Nivel › Piso −</span>`;
@@ -147,6 +149,7 @@ function fits(t, r, px, py) {
 }
 const snapPos = (t, r, p) => { const Rr = rot(t, r); return [Math.round((p.x - Rr.w / 2) / 2) * 2, Math.round((p.y - Rr.d / 2) / 2) * 2]; };
 const bombAt = (x, y) => (G.level.bombs || []).findIndex(b => Math.hypot(b.x - x, b.y - y) < 5);
+const snakeAt = (x, y) => (G.level.snakes || []).findIndex(b => Math.hypot(b.x - x, b.y - y) < 5);
 function propAt(x, y) { const L = G.level.props; for (let i = L.length - 1; i >= 0; i--) { const p = L[i], Rr = rot(p.t, p.r); if (x >= p.x && x < p.x + Rr.w && y >= p.y && y < p.y + Rr.d) return i; } return -1; }
 const tileOf = p => [Math.floor(p.x / TILE), Math.floor(p.y / TILE)];
 const FLOOR_TOOLS = { floorAdd: '1', floorOpen: '2', floorDel: '0' };   // valor que pinta cada herramienta
@@ -187,6 +190,7 @@ function shiftLevel(dx, dy) {          // mueve todo el contenido del nivel (en 
   for (const l of L.lasers) { l.x += dx; l.y += dy; }
   for (const g of L.gates || []) { g.x += dx; g.y += dy; }
   for (const b of L.bombs || []) { b.x += dx; b.y += dy; }
+  for (const b of L.snakes || []) { b.x += dx; b.y += dy; }
   L.exit.x += dx; L.exit.y += dy; L.player[0] += dx; L.player[1] += dy; if (L.entrance) { L.entrance.x += dx; L.entrance.y += dy; } if (L.callBtn) { L.callBtn.x += dx; L.callBtn.y += dy; } for (const o of [L.crystal, L.portal]) if (o) { o.x += dx; o.y += dy; }
   shiftView(dx, dy);                   // la cámara se mueve igual, así no salta la vista
 }
@@ -261,12 +265,15 @@ function updateHover() {
   else if (tool === 'cam') { const s = camSpot(p.x, p.y); if (s) showBox(4, 21, 4, s.x, Z + 10.5, -s.y, true); else showBox(4, .6, 4, p.x, Z + .3, -p.y, false); }
   else if (tool === 'laser') { const [a, b] = laserEnds(Math.floor(p.x), Math.floor(p.y), laserDir), len = Math.hypot(b[0] - a[0], b[1] - a[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
     if (laserDir === 'x') showBox(len, 14, 1, mx, Z + 8, -my, len >= 2); else showBox(1, 14, len, mx, Z + 8, -my, len >= 2); }
+  else if (tool === 'snake') { const si = snakeAt(p.x, p.y); if (si >= 0) { const b = G.level.snakes[si]; showBox(8, 6, 8, b.x, Z + 3, -b.y, false); } else showBox(SNAKE.cell, 4, SNAKE.cell, snapSnake(p.x), Z + 2, -snapSnake(p.y), free(p.x, p.y, 3)); }
   else if (tool === 'bomb') { const bi = bombAt(p.x, p.y); if (bi >= 0) { const b = G.level.bombs[bi]; showBox(9, 9, 9, b.x, Z + 4.5, -b.y, false); } else showBox(BOMB.pickR * 2, .6, BOMB.pickR * 2, p.x, Z + .3, -p.y, free(p.x, p.y, 4)); }
   else if (tool === 'gate') { const [a, b] = laserEnds(Math.floor(p.x), Math.floor(p.y), laserDir), len = Math.hypot(b[0] - a[0], b[1] - a[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
     if (laserDir === 'x') showBox(len, 20, 1.5, mx, Z + 10, -my, len >= 2); else showBox(1.5, 20, len, mx, Z + 10, -my, len >= 2); }
   else if (tool === 'erase') {
     const bi = bombAt(p.x, p.y);
     if (bi >= 0) { const b = G.level.bombs[bi]; showBox(9, 9, 9, b.x, Z + 4.5, -b.y, false); return; }
+    const si = snakeAt(p.x, p.y);
+    if (si >= 0) { const b = G.level.snakes[si]; showBox(8, 6, 8, b.x, Z + 3, -b.y, false); return; }
     const gi = gateAt(p.x, p.y);
     if (gi >= 0) { const d = G.level.gates[gi], [a, b] = laserEnds(Math.floor(d.x), Math.floor(d.y), d.dir), len = Math.hypot(b[0] - a[0], b[1] - a[1]);
       if (d.dir === 'x') showBox(len, 21, 2, (a[0] + b[0]) / 2, Z + 10, -(a[1] + b[1]) / 2, false); else showBox(2, 21, len, (a[0] + b[0]) / 2, Z + 10, -(a[1] + b[1]) / 2, false); return; }
@@ -298,11 +305,13 @@ function editClick(p) {
   else if (tool === 'cam') { const s = camSpot(p.x, p.y); if (s) change(() => L.cams.push({ x: s.x, y: s.y, a: +s.a.toFixed(4) })); }
   else if (tool === 'laser') { const [a, b] = laserEnds(Math.floor(p.x), Math.floor(p.y), laserDir); if (Math.hypot(b[0] - a[0], b[1] - a[1]) >= 2) change(() => L.lasers.push({ x: Math.floor(p.x), y: Math.floor(p.y), dir: laserDir })); }
   else if (tool === 'gate') { const [a, b] = laserEnds(Math.floor(p.x), Math.floor(p.y), laserDir); if (Math.hypot(b[0] - a[0], b[1] - a[1]) >= 2) change(() => (L.gates ||= []).push({ x: Math.floor(p.x), y: Math.floor(p.y), dir: laserDir })); }
+  else if (tool === 'snake') { const si = snakeAt(p.x, p.y); if (si >= 0) change(() => L.snakes.splice(si, 1)); else if (free(snapSnake(p.x), snapSnake(p.y), 3)) change(() => (L.snakes ||= []).push({ x: snapSnake(p.x), y: snapSnake(p.y) })); }
   else if (tool === 'bomb') { const bi = bombAt(p.x, p.y); if (bi >= 0) change(() => L.bombs.splice(bi, 1)); else if (free(p.x, p.y, 4)) change(() => (L.bombs ||= []).push({ x: Math.round(p.x), y: Math.round(p.y) })); }
   else if (tool === 'erase') {
-    const li = laserAt(p.x, p.y), ci = camAt(p.x, p.y), hi = hideAt(p.x, p.y), bi = bombAt(p.x, p.y);
+    const li = laserAt(p.x, p.y), ci = camAt(p.x, p.y), hi = hideAt(p.x, p.y), bi = bombAt(p.x, p.y), si = snakeAt(p.x, p.y);
     const gi = gateAt(p.x, p.y);
     if (bi >= 0) change(() => L.bombs.splice(bi, 1));
+    else if (si >= 0) change(() => L.snakes.splice(si, 1));
     else if (gi >= 0) change(() => L.gates.splice(gi, 1));
     else if (li >= 0) change(() => L.lasers.splice(li, 1));
     else if (ci >= 0) change(() => L.cams.splice(ci, 1));

@@ -281,3 +281,13 @@ export const scribbleSound = () => tone((a, t0) => {
   const f = a.createBiquadFilter(), g = a.createGain(); f.type = 'bandpass'; f.frequency.value = 2600 + Math.random() * 1600; f.Q.value = 1.5; g.gain.value = .05;
   n.buffer = b; n.connect(f).connect(g).connect(a.destination); n.start(t0);
 });
+
+// serpiente robot: siseo eléctrico al verte
+export const hissSound = () => tone((a, t0) => {
+  const n = a.createBufferSource(), b = a.createBuffer(1, a.sampleRate * .5 | 0, a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.min(1, i / 600) * (1 - i / d.length);
+  const f = a.createBiquadFilter(), g = a.createGain(); f.type = 'highpass'; f.frequency.value = 3800; g.gain.value = .09;
+  const o = a.createOscillator(), og = a.createGain(); o.type = 'square'; o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(70, t0 + .35);
+  og.gain.setValueAtTime(.03, t0); og.gain.exponentialRampToValueAtTime(.0001, t0 + .4);
+  n.buffer = b; n.connect(f).connect(g).connect(a.destination); o.connect(og).connect(a.destination); n.start(t0); o.start(t0); o.stop(t0 + .45);
+});

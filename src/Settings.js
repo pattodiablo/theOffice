@@ -121,6 +121,22 @@ export const MAINFRAME = {
   crystalTime: 1,             // segundos de vuelo del cristal
   crystalDist: 20,            // dónde cae: a esta distancia del centro, hacia donde estás tú
 };
+// Serpiente robot (level.snakes = [{ x, y }], editor › Seguridad › Serpiente): se mueve como en el juego Snake, de
+// casilla en casilla y girando solo en ángulo recto, con el cuerpo siguiendo a la cabeza. Patrulla cerca de donde la pusiste;
+// si te ve, se pone roja y te persigue eligiendo en cada casilla el giro que más la acerca. Si la cabeza te toca, te atrapa.
+// No puede atravesar su propio cuerpo; si se encierra, se da vuelta (la cola pasa a ser la cabeza).
+export const SNAKE = {
+  cell: 4,                    // tamaño de la casilla (vóxeles; una baldosa = 8)
+  step: .26,                  // segundos por casilla patrullando
+  huntStep: .17,              // segundos por casilla persiguiéndote
+  len: 8,                     // segmentos del cuerpo
+  range: 32,                  // a qué distancia te ve (las paredes y muebles altos la tapan)
+  lostTime: 2.5,              // segundos que te sigue buscando después de perderte de vista
+  wander: 36,                 // qué tan lejos de su lugar se aleja patrullando
+  turnChance: .22,            // probabilidad de girar en cada casilla al patrullar (si no, sigue derecho)
+  hitR: 3.6,                  // qué tan cerca tiene que pasar la cabeza para atraparte
+};
+
 // Abeja robot (prop "bee"): revolotea cerca de donde la pusiste; si te ve dentro de su rango, zumba, marca en el piso
 // la línea por donde va a pasar y te embiste en línea recta. Si te toca, te atrapa. Si choca contra una pared queda mareada.
 export const BEE = {

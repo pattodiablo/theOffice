@@ -13,6 +13,7 @@ import { player } from './Player.js';
 import { agents, stunAgent } from './Agent.js';
 import { bossTargets, hitBoss } from './MainFrame.js';
 import { beeTargets, stunBee } from './Bee.js';
+import { snakeTargets, stunSnake } from './Snake.js';
 
 // Bomba aturdidora (level.bombs = [{ x, y }], se pone en el editor › Seguridad › Bomba). Ajustes en BOMB (Settings.js).
 // Ciclo de cada punto:  wait → warn (marca roja en el piso) → fall (cae del techo) → ground (se puede recoger)
@@ -117,6 +118,10 @@ function throwTarget() {
     const d = Math.hypot(e.x - player.x, e.y - player.y);
     if (d < bd && rayDist(player.x, player.y, Math.atan2(e.y - player.y, e.x - player.x), d, 12) >= d - 2) { bd = d; best = e; }
   }
+  for (const e of snakeTargets()) {                       // serpientes robot (a la cabeza)
+    const d = Math.hypot(e.x - player.x, e.y - player.y);
+    if (d < bd && rayDist(player.x, player.y, Math.atan2(e.y - player.y, e.x - player.x), d, 12) >= d - 2) { bd = d; best = e; }
+  }
   for (const a of agents) {
     if (!a.path.length || a.state === 'ko') continue;
     const d = Math.hypot(a.x - player.x, a.y - player.y);
@@ -132,6 +137,7 @@ function explode(b) {
   let n = 0, boss = false;
   for (const a of agents) if (a.path.length && Math.hypot(a.x - x, a.y - y) < BOMB.blastR) { stunAgent(a, BOMB.stunTime, x, y); n++; }
   for (const e of beeTargets()) if (Math.hypot(e.x - x, e.y - y) < BOMB.blastR) { stunBee(e, BOMB.stunTime); n++; }
+  for (const e of snakeTargets()) if (Math.hypot(e.x - x, e.y - y) < BOMB.blastR) { stunSnake(e, BOMB.stunTime); n++; }
   for (const m of bossTargets()) if (Math.hypot(m.x - x, m.y - y) < BOMB.blastR + 6) { hitBoss(m); boss = true; }   // +6: el cuerpo del jefe es grande
   if (!boss) popText(x, y, n ? (n > 1 ? `${n} STUNNED!` : 'STUNNED!') : 'MISSED!', n ? 'cyan' : 'red');
 }
