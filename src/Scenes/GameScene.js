@@ -28,6 +28,7 @@ import { setAlarm, setGlitchFX } from '../FX/ScreenFX.js';
 import { setTime, setMeter, showScreen, hideScreen } from '../UI/HUD.js';
 import { onModeChange } from './EditorScene.js';
 import { startExit, resetExit } from './ElevatorScene.js';
+import { updateTutorial } from '../UI/Tutorial.js';
 import { startCaught, resetCaught } from './CaughtScene.js';
 
 // Reglas del juego: modos (editar / jugar / pantalla), un intento completo, ganar y perder.
@@ -56,6 +57,7 @@ export function showTitle() {
 export function updateGame(dt) {
   G.time += dt; G.grace = Math.max(0, G.grace - dt); G.frozen = Math.max(0, G.frozen - dt); G.cool = Math.max(0, G.cool - dt);
   movePlayer(dt);
+  updateTutorial(player);
   updateCamouflage(player, dt);
   updateRacks(dt, player); updateSafes(dt, player); updateBombs(dt, player);
   updateElevatorCall(dt, player);

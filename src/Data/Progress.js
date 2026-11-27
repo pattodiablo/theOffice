@@ -31,6 +31,9 @@ export const coins = () => P.coins ?? HATS.startCoins;
 export const ownsHat = id => !!HATS.list.find(h => h.id === id && h.price <= 0) || (P.hats || []).includes(id);
 export const equippedHat = () => (P.hat && ownsHat(P.hat) ? P.hat : null);
 export function equipHat(id) { P.hat = id; save(); }
+// tutorial de movimiento (UI/Tutorial.js): se muestra hasta que caminas la primera vez
+export const tutorialDone = () => !!P.tut;
+export function markTutorial() { P.tut = true; save(); }
 export function buyHat(id) {
   const h = HATS.list.find(h => h.id === id); if (!h || ownsHat(id) || coins() < h.price) return false;
   P.coins = coins() - h.price; (P.hats ||= []).push(id); P.hat = id; save(); return true;

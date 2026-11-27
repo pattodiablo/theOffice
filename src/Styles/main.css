@@ -310,3 +310,36 @@ body.exiting #rpMsg,body.caught #rpMsg{display:none}
 .dial .smsg.show{opacity:1}
 @media(max-width:600px){.dial .scard-wrap{width:clamp(84px,27vw,120px)}.dial .sarrow{width:28px}.dial .dshop{left:calc(var(--x) + var(--col) + 2px);right:2px}}
 @media(prefers-reduced-motion:reduce){.dial .scard.bought,.dial .scard.nope,#reward .rcoins em,.scoins.bump{animation:none}#reward .rcoins em{opacity:1}}
+
+/* ===== tutorial de movimiento sin palabras (UI/Tutorial.js) ===== */
+#tut{position:fixed;left:50%;bottom:max(9vh,64px);z-index:3;transform:translate(-50%,16px);opacity:0;pointer-events:none;transition:opacity .4s,transform .4s;--c:2.4s}
+#tut.show{opacity:1;transform:translate(-50%,0)}
+body.caught #tut,body.exiting #tut,body:not(.play) #tut{display:none}
+#tut .tmob,#tut.touch .tpc{display:none}
+#tut.touch .tmob{display:flex}
+#tut .tpc,#tut .tmob{flex-direction:column;align-items:center;gap:14px}
+#tut .tpc{display:flex}
+/* mini pantalla con el puntito que se mueve igual que las teclas / el joystick */
+#tut .tmini{position:relative;width:74px;height:74px;transform:skewX(-20deg);background:rgba(19,32,26,.85);border:2px solid #22c55e}
+#tut .tdot{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px;border-radius:50%;background:#3be07c;box-shadow:0 0 12px #3be07c;animation:tdot var(--c) ease-in-out infinite}
+@keyframes tdot{0%,100%{transform:translate(-14px,14px)}25%{transform:translate(-14px,-14px)}50%{transform:translate(14px,-14px)}75%{transform:translate(14px,14px)}}
+/* teclas */
+#tut .tkeys{display:flex;align-items:center;gap:18px}
+#tut .tor{font:400 40px/1 Anton,sans-serif;color:rgba(191,232,255,.45)}
+#tut .tpad{text-align:center;line-height:0}
+#tut .tk{display:inline-flex;align-items:center;justify-content:center;width:48px;height:46px;margin:3px;border-radius:8px;background:#dfe9e3;color:#06140c;font:400 24px/1 Anton,Bangers,sans-serif;
+  box-shadow:0 6px 0 #6f8a7b,0 8px 10px rgba(0,0,0,.4);animation:tkey var(--c) infinite;animation-delay:calc(var(--i) * var(--c) / 4)}
+@keyframes tkey{0%,20%{background:#3be07c;transform:translateY(5px);box-shadow:0 1px 0 #1f6b36,0 2px 6px rgba(0,0,0,.4)}25%,100%{background:#dfe9e3;transform:none;box-shadow:0 6px 0 #6f8a7b,0 8px 10px rgba(0,0,0,.4)}}
+/* joystick + dedo (celular) */
+#tut .tjoy{position:relative;width:120px;height:120px}
+#tut .tring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(59,224,124,.6);background:rgba(59,224,124,.1);animation:tring var(--c) infinite}
+#tut .tknob,#tut .tripple{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px;border-radius:50%}
+#tut .tknob{background:#3be07c;opacity:.9;animation:tknob var(--c) ease-in-out infinite}
+#tut .tripple{border:3px solid #fff;animation:tripple var(--c) ease-out infinite}
+#tut .thand{position:absolute;left:50%;top:50%;width:46px;margin:-6px 0 0 -16px;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));animation:thand var(--c) ease-in-out infinite}
+@keyframes tknob{0%,8%{transform:none}25%{transform:translate(0,-34px)}50%{transform:translate(34px,0)}75%{transform:translate(0,34px)}92%,100%{transform:translate(-34px,0)}}
+@keyframes thand{0%{transform:translate(18px,30px) scale(1.15);opacity:0}6%{opacity:1;transform:translate(0,0) scale(1.15)}9%{transform:none}25%{transform:translate(0,-34px)}50%{transform:translate(34px,0)}75%{transform:translate(0,34px)}92%{transform:translate(-34px,0);opacity:1}100%{transform:translate(-20px,30px) scale(1.15);opacity:0}}
+@keyframes tring{0%,6%{opacity:0;transform:scale(.6)}12%,90%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes tripple{0%,7%{opacity:0;transform:scale(.4)}9%{opacity:.9}22%,100%{opacity:0;transform:scale(1.6)}}
+@media(max-width:600px){#tut{bottom:max(14vh,90px)}#tut .tk{width:40px;height:38px;font-size:20px}#tut .tkeys{gap:10px}}
+@media(prefers-reduced-motion:reduce){#tut *{animation-duration:4.8s!important}}
