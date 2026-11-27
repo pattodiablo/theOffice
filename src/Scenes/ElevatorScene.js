@@ -4,8 +4,10 @@ import { G } from '../Core/Game.js';
 import { WAKE_MESSAGES } from '../Settings.js';
 import { markDone } from '../Data/Progress.js';
 import { showDial, hideDial, fragmentsText } from '../UI/FloorSelect.js';
+import { COIN } from '../UI/HatShop.js';
 import { renderer, stage, CAM_OFF } from '../Core/Engine.js';
 import { makeCharacter, box } from '../Prefabs/Character.js';
+import { wearHat } from '../Prefabs/Hats.js';
 import { poseClip } from '../Animations/CharacterPoses.js';
 import { player } from '../Prefabs/Player.js';
 import { ease } from '../Core/MathUtils.js';
@@ -100,7 +102,7 @@ function buildElevator() {
   floorTex = label('1', 96, 64);
   const num = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 2.9), new THREE.MeshBasicMaterial({ map: floorTex.tex })); num.position.set(1.7, Z0 + 21, -8.6); cabin.add(num);
   const inner = new THREE.PointLight(0x9dffc4, 220, 40, 2); inner.position.set(2, Z0 + 18, 2); cabin.add(inner);
-  rider = makeCharacter(cabin, false);
+  rider = makeCharacter(cabin, false); wearHat(rider);
 
   // rayas de velocidad junto a las paredes (pasan hacia arriba mientras baja)
   const sm = new THREE.MeshBasicMaterial({ color: 0x9dffc4, transparent: true, opacity: .5, depthWrite: false });
@@ -132,6 +134,10 @@ function buildUI() {
   });
 }
 
+// monedas ganadas en este piso (se muestran debajo del subtítulo, una por una)
+let earned = [];
+const earnedHTML = () => earned.length ? `<span class="rcoins">${earned.map((g, i) => `<em style="animation-delay:${(.25 + i * .35).toFixed(2)}s">+${g.n}${COIN} ${g.why}</em>`).join('')}</span>` : '';
+
 export function initElevator() { buildElevator(); buildUI(); }
 // cuántos niveles hay (define en qué piso empieza el edificio); main lo llama al cargar
 export async function initFloors() { levelCount = EDITOR ? 1 : await countLevels(G.levelName); }
@@ -142,7 +148,7 @@ export function startExit() {
   haptic([25, 60, 25]);                                  // "¡lo lograste!" al entrar al ascensor
   let i; do { i = Math.random() * WAKE_MESSAGES.length | 0; } while (WAKE_MESSAGES.length > 1 && i === lastMsg);
   lastMsg = i; msg = WAKE_MESSAGES[i]; shownChars = -1; msgEl.textContent = ''; done = false;
-  if (!EDITOR) markDone(G.levelName, !!G.gotCrystal, G.time);             // piso terminado (y su cristal, si lo llevas)
+  earned = EDITOR ? [] : markDone(G.levelName, !!G.gotCrystal, G.time, !G.alerts);   // piso terminado (y su cristal, si lo llevas): monedas ganadas
   G.mode = 'exit'; ex = 0; shown = false; loading = false; travel = 0; speed = 0; floorShown = null;
   fromFloor = Math.max(1, levelCount - levelNumber(G.levelName) + 1);   // nivel 1 de 20 → piso 20 (baja al 19)
   segs.forEach((s, k) => { s.g.position.y = (k - 2) * FLOOR_H; const n = fromFloor + k - 2; if (s.num !== n) { s.num = n; s.L.draw(floorName(n)); } });
@@ -201,7 +207,7 @@ export function updateElevator(dt) {
       if (n >= msg.length && ex >= T_MSG + msg.length * CHAR_TIME + .3 && !rewardEl.classList.contains('show-play')) {
         done = true; rewardEl.classList.add('show-play');
         if (EDITOR) playBtn.focus();
-        else { rewardEl.querySelector('.rsub').textContent = fragmentsText(); showDial(rewardEl.querySelector('.mid'), nextLevelName(G.levelName) || G.levelName, playLevel); }
+        else { rewardEl.querySelector('.rsub').innerHTML = fragmentsText() + earnedHTML(); showDial(rewardEl.querySelector('.mid'), nextLevelName(G.levelName) || G.levelName, playLevel); }
       }
     }
   }

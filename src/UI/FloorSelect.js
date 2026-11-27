@@ -1,12 +1,13 @@
 import { EDITOR, $ } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
 import { loadLevelNamed, nextLevelName, countLevels, prefetchLevel } from '../Data/LevelIO.js';
-import { levelInfo, unlocked, crystalCount, hasCrystal, crystalsNeeded } from '../Data/Progress.js';
+import { levelInfo, unlocked, crystalCount, hasCrystal, crystalsNeeded, coins } from '../Data/Progress.js';
 import { PORTAL } from '../Settings.js';
 import { tickSound } from '../Core/Audio.js';
 import { rebuild } from '../Scenes/Level.js';
 import { pokiBreak, pokiBusy } from '../Core/Poki.js';
 import { setMode } from '../Scenes/GameScene.js';
+import { makeShop, resetShop, COIN } from './HatShop.js';
 
 // Selector de pisos tipo "dial": una columna de pisos a la izquierda que se mueve con ▲/▼, la rueda del mouse,
 // las flechas / W-S del teclado o arrastrando con el dedo (se acomoda solo en el piso más cercano).
@@ -26,6 +27,7 @@ function buildDial() {
   dial.innerHTML = `<div class="dband"><button class="dplay">PLAY FLOOR ▶</button></div>
     <div class="dlist"></div>
     <button class="darrow dup" aria-label="Previous floor">▲</button><button class="darrow ddown" aria-label="Next floor">▼</button>`;
+  dial.append(makeShop(() => document.querySelectorAll('.scoins').forEach(e => { e.innerHTML = coins() + COIN; e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); })));
   list = dial.querySelector('.dlist'); band = dial.querySelector('.dband'); playB = dial.querySelector('.dplay');
   dial.querySelector('.dup').addEventListener('click', () => step(-1));
   dial.querySelector('.ddown').addEventListener('click', () => step(1));
@@ -110,7 +112,7 @@ export async function showDial(host, sel, cb) {
   let i = floors.findIndex(f => f.name === sel); if (i < 0) i = floors.findIndex(f => f.name === G.levelName);
   target = clampI(i < 0 ? 0 : i); if (!floors[target].open) target = clampI(floors.filter(f => f.open).length - 1);
   pos = target; lastTick = target;
-  onPlay = cb; host.append(dial); measure(); updateBand();
+  onPlay = cb; host.append(dial); measure(); updateBand(); resetShop();
   active = true; cancelAnimationFrame(raf); frame();
 }
 export function hideDial() { active = false; onPlay = null; cancelAnimationFrame(raf); dial?.remove(); }
@@ -125,12 +127,13 @@ export function initFloorSelect() {
   addEventListener('keydown', e => { if (!menuEl.hidden && e.code === 'Escape') closeFloors(); });
 }
 
-export const fragmentsText = () => `◆ ${crystalCount()} / ${crystalsNeeded()} reality fragments`;
+// subtítulo del ascensor (va con innerHTML): fragmentos y monedas
+export const fragmentsText = () => `◆ ${crystalCount()} / ${crystalsNeeded()} reality fragments<span class="scoins">${coins()}${COIN}</span>`;
 
 export async function openFloors() {
   if (EDITOR || !menuEl.hidden || G.mode === 'exit') return;
   prevMode = G.mode; if (G.mode === 'play') G.mode = 'menu';            // pausa mientras está abierto
-  menuEl.querySelector('.fsub').textContent = fragmentsText();
+  menuEl.querySelector('.fsub').innerHTML = fragmentsText();
   menuEl.hidden = false;
   await showDial(menuEl.querySelector('.dslot'), G.levelName, name => { menuEl.hidden = true; goToLevel(name); });
 }

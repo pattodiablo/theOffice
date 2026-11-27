@@ -4,6 +4,7 @@ import { PLAYER_SPEED, GLITCH_TIME, GLITCH_COOLDOWN, STEP_VOLUME, STEP_TIME, ANI
 import { dust } from '../FX/Particles.js';
 import { footstep } from '../Core/Audio.js';
 import { makeCharacter } from './Character.js';
+import { wearHat } from './Hats.js';
 import { ENT_APPEAR } from '../Animations/IntroAnimation.js';
 import { pose, poseClip } from '../Animations/CharacterPoses.js';
 import { free as gridFree } from '../World/Grid.js';
@@ -15,7 +16,7 @@ import { pokiPlay } from '../Core/Poki.js';
 
 // Jugador (el oficinista): movimiento y glitch.
 export const player = { ch: null, x: 0, y: 0, ang: Math.PI / 4, moving: false, stepT: 0, vx: 0, vy: 0 }; // vx, vy: velocidad (la usan los agentes rojos para adelantarse)
-export function initPlayer(scene) { player.ch = makeCharacter(scene, false); }
+export function initPlayer(scene) { player.ch = makeCharacter(scene, false); wearHat(player.ch); }
 
 export function doGlitch() { if (G.mode !== 'play' || G.cool > 0) return; G.frozen = GLITCH_TIME; G.cool = GLITCH_COOLDOWN; G.usedGlitch = true; }
 

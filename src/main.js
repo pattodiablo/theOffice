@@ -34,6 +34,7 @@ import { initExitDoor, updateExitDoor } from './Prefabs/ExitDoor.js';
 import { updateIntro } from './Animations/IntroAnimation.js';
 import { loadClips } from './Animations/Clips.js';
 import { loadCharacterModels } from './Prefabs/Character.js';
+import { loadHats } from './Prefabs/Hats.js';
 import { updateSeeThrough } from './FX/SeeThrough.js';
 import { updateAssembly, setAssemblyScene, preRender, postRender } from './FX/Assemble.js';
 import { worldMesh } from './World/Grid.js';
@@ -71,7 +72,7 @@ async function main() {
   loadStep(.05, 'LOADING OFFICE'); await pokiInit();
   G.DATA = await (await fetch('data/office.json')).json();
   initPalette(G.DATA.colors); initMaterials(); initProps(G.DATA);
-  loadStep(.4, 'LOADING PEOPLE'); await Promise.all([loadClips(), loadCharacterModels()]);
+  loadStep(.4, 'LOADING PEOPLE'); await Promise.all([loadClips(), loadCharacterModels(), loadHats()]);
   loadStep(.7, 'LOADING FLOOR');
   // si ya jugaste antes (y la dirección no pide un piso), retoma en el primer piso que no terminaste
   let start = LEVEL_NAME; const pre = (LEVEL_NAME.match(/^(.*?)\d+$/) || [0, 'piso'])[1];

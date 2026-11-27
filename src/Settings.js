@@ -146,6 +146,24 @@ export const GLITCH_FLOOR = {
 export const GATE = {
   closeTime: 7,               // segundos que quedan cerrados después de la última alarma
 };
+// Sombreros (skins) y monedas. Los modelos están en public/hats/<id>.vox (tools/generar_sombreros.py crea los de base).
+// Se compran con monedas en el ascensor (debajo del dial de pisos) y se eligen ahí mismo.
+// Las monedas se ganan UNA vez por piso: por terminarlo, por traer su cristal y por pasarlo sin que suene ninguna alarma.
+export const HATS = {
+  sink: 1.2,                  // cuánto se hunde el sombrero en la cabeza (unidades del juego)
+  startCoins: 0,              // monedas al empezar una partida nueva
+  coins: { done: 1, crystal: 1, clean: 1 },
+  list: [                     // id = nombre del archivo .vox · price = monedas (0 = gratis desde el inicio)
+    { id: 'gorra', name: 'Cap', price: 1 },
+    { id: 'fiesta', name: 'Party hat', price: 2 },
+    { id: 'pirata', name: 'Pirate hat', price: 2 },
+    { id: 'sombrero', name: 'Sombrero', price: 2 },
+    { id: 'casco', name: 'Hard hat', price: 3 },
+    { id: 'cono', name: 'Traffic cone', price: 3 },
+    { id: 'copa', name: 'Top hat', price: 4 },
+    { id: 'corona', name: 'Crown', price: 6 },
+  ],
+};
 // Noquear por la espalda (automático): tocar a un guardia por detrás lo deja en el piso unos segundos.
 // No funciona si ya te vio ("!") ni con el dron vigía (flota). Durante el glitch funciona aunque te mire.
 export const TAKEDOWN = {
