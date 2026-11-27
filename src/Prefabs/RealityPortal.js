@@ -106,8 +106,18 @@ function startFarewell(q) {
   farewell = { q, t: 0, x: player.x, y: player.y, ang: player.ang, done: false };
 }
 // cada frame, después de las animaciones del jugador (las reemplaza)
+// para desvanecer solo al jugador: copias transparentes de sus materiales (los originales se comparten con los agentes)
+function setAlpha(ch, a) {
+  ch.root.traverse(o => {
+    if (!o.isMesh) return;
+    if (a >= 1) { if (o.userData.fwMat) { o.material.dispose(); o.material = o.userData.fwMat; delete o.userData.fwMat; o.castShadow = true; } return; }
+    if (!o.userData.fwMat) { o.userData.fwMat = o.material; o.material = o.material.clone(); o.material.transparent = true; }
+    o.material.opacity = a; o.castShadow = a > .5;
+  });
+}
 export function updateFarewell(dt) {
-  if (G.mode !== 'farewell' || !farewell) { farewell = null; return; }
+  if (G.mode === 'ending' && farewell) { player.ch.root.visible = false; return; }          // ya entró: no reaparece detrás de la pantalla final
+  if (G.mode !== 'farewell' || !farewell) { if (farewell) setAlpha(player.ch, 1); farewell = null; return; }
   const f = farewell, ch = player.ch, wave = clipDuration('wave') || 2, t = (f.t += dt);
   ch.root.visible = true; ch.root.scale.setScalar(1);
   if (t < FW.turn) {                                                      // girar hacia la cámara
@@ -115,13 +125,13 @@ export function updateFarewell(dt) {
     pose(ch, f.x, f.y, player.ang, G.t, false);
   } else if (t < FW.turn + wave) {                                        // chau, chau
     player.ang = CAM_ANG; poseClip(ch, f.x, f.y, CAM_ANG, 'wave', t - FW.turn);
-  } else {                                                                // se da vuelta y entra al portal, achicándose
-    const k = Math.min(1, (t - FW.turn - wave) / FW.walk), h = f.q.hole, to = Math.atan2(h.y - f.y, h.x - f.x);
+  } else {                                                                // se da vuelta, camina hacia el portal y se desvanece en la luz
+    const k = Math.min(1, (t - FW.turn - wave) / FW.walk), h = f.q.hole, to = Math.atan2(h.y - f.y, h.x - f.x), w = k * .6;   // no llega a meterse en el marco
     player.ang = lerpAng(CAM_ANG, to, Math.min(1, k * 4));
-    player.x = f.x + (h.x - f.x) * k; player.y = f.y + (h.y - f.y) * k;
+    player.x = f.x + (h.x - f.x) * w; player.y = f.y + (h.y - f.y) * w;
     pose(ch, player.x, player.y, player.ang, G.t, true);
-    const s = 1 - Math.max(0, k - .55) / .45; ch.root.scale.setScalar(Math.max(.001, s));
-    if (k >= 1 && !f.done) { f.done = true; ch.root.visible = false; startEnding(); }
+    const a = 1 - Math.min(1, Math.max(0, (k - .25) / .65)); setAlpha(ch, a); ch.root.visible = a > .01;
+    if (k >= 1 && !f.done) { f.done = true; startEnding(); }
   }
 }
 
