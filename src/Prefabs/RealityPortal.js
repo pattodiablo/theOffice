@@ -11,6 +11,7 @@ import { crystalSound } from '../Core/Audio.js';
 import { puff } from '../FX/Particles.js';
 import { shake, kick, flash, popText } from '../FX/Juice.js';
 import { startEnding } from './Portal.js';
+import { pokiMeasureOnce } from '../Core/Poki.js';
 import { player } from './Player.js';
 import { pose, poseClip } from '../Animations/CharacterPoses.js';
 import { clipDuration } from '../Animations/Clips.js';
@@ -144,6 +145,7 @@ export function updateFarewell(dt) {
 export function animateRealityPortals(dt) {
   const on = online();
   if (on && !wasOnline && G.mode === 'play') {                   // ¡se encendió!
+    pokiMeasureOnce('portal', 'online', 'reached');                   // Poki: juntó y echó todos los cristales
     const q = portals[0]; shake(1); kick(.12); flash('127,220,255', .45); if (q) popText(q.hole.x, q.hole.y, 'PORTAL ONLINE', 'cyan');
   }
   wasOnline = on;

@@ -1,3 +1,5 @@
+import { pokiMeasure } from '../Core/Poki.js';
+import { levelNumber } from '../Data/LevelIO.js';
 import * as THREE from 'three';
 import { Z, EDITOR } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
@@ -69,7 +71,7 @@ export function resetCrystal() { G.gotCrystal = false; G.hadCrystal = !EDITOR &&
 export function updateCrystal(dt, p) {
   const c = where(); if (!c || !c.ready || G.gotCrystal) return;
   if (Math.hypot(p.x - c.x, p.y - c.y) < CRYSTAL.pickR) {
-    G.gotCrystal = true; crystalSound(); puff(c.x, c.y);
+    G.gotCrystal = true; crystalSound(); puff(c.x, c.y); pokiMeasure('crystal', levelNumber(G.levelName), 'collected');   // Poki
     hitstop(.09); kick(.12); shake(.4); flash('120,220,255', .4); haptic([20, 40, 20]);
     pickT0 = G.t; absorbed = false; from = { x: c.x, y: c.y, z: Z + 8 + c.hop + Math.sin(G.t * 2.4) * .9 };
     showToast(G.hadCrystal ? 'REALITY FRAGMENT <small>(already yours)</small>' : 'REALITY FRAGMENT ACQUIRED');

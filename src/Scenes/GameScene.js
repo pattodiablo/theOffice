@@ -10,6 +10,9 @@ import { resetLasers, updateLasers } from '../Prefabs/LaserGate.js';
 import { resetTowers, updateTowers } from '../Prefabs/SensorTower.js';
 import { resetSafes, updateSafes } from '../Prefabs/Safe.js';
 import { resetBombs, updateBombs } from '../Prefabs/Bomb.js';
+import { resetObserver, updateObserver } from '../Prefabs/Observer.js';
+import { pokiLevelStart } from '../Core/Poki.js';
+import { levelNumber } from '../Data/LevelIO.js';
 import { updateRealityPortals, syncRealityPortals } from '../Prefabs/RealityPortal.js';
 import { resetProgress, startEndingTest, stopEndingTest } from '../Data/Progress.js';
 import { resetMainFrames, updateMainFrames } from '../Prefabs/MainFrame.js';
@@ -35,8 +38,9 @@ import { startCaught, resetCaught } from './CaughtScene.js';
 
 export function setMode(m) {
   G.mode = m; resize(); G.snapCam = true; document.body.classList.toggle('play', m !== 'edit'); hideScreen(); resetExit(); resetCaught(); clearBullets();
+  if (m === 'play' && !EDITOR) pokiLevelStart(levelNumber(G.levelName));   // Poki: empieza un intento del piso
   if (EDITOR) { onModeChange(m); if (m === 'edit') { stopEndingTest(); syncRealityPortals(); } const eb = $('#endTestBtn'); if (eb) eb.hidden = !hasRealityPortal(); }
-  resetAgents(); resetCams(); resetRacks(); resetLasers(); resetTowers(); resetSafes(); resetBombs(); resetMainFrames(); resetBees(); resetGlitchFloor(); resetGates(); resetCrystal(); Object.assign(player, { x: G.seat.x, y: G.seat.y, ang: Math.PI / 2, vx: 0, vy: 0 });
+  resetAgents(); resetCams(); resetRacks(); resetLasers(); resetTowers(); resetSafes(); resetBombs(); resetObserver(m); resetMainFrames(); resetBees(); resetGlitchFloor(); resetGates(); resetCrystal(); Object.assign(player, { x: G.seat.x, y: G.seat.y, ang: Math.PI / 2, vx: 0, vy: 0 });
   if (G.entOk && m === 'play') { const [x, y] = G.ENT.point(5.5, .5); Object.assign(player, { x, y, ang: G.ENT.ang }); } // con entrada: espera detrás de las puertas
   resetIntro(m === 'play');
   Object.assign(G, { time: 0, frozen: 0, cool: 0, maxSeen: 0, alerts: 0, doorOpen: 0, doorWant: false, elev: 'idle', elevT: 0, usedGlitch: false, revived: false, grace: 0, hiddenKind: null, hideT: 0, popT: 1 }); resetHideSpots();
@@ -59,7 +63,7 @@ export function updateGame(dt) {
   movePlayer(dt);
   updateTutorial(player);
   updateCamouflage(player, dt);
-  updateRacks(dt, player); updateSafes(dt, player); updateBombs(dt, player);
+  updateRacks(dt, player); updateSafes(dt, player); updateBombs(dt, player); updateObserver(dt, player);
   updateElevatorCall(dt, player);
   checkExitProximity(player);
   const ag = updateAgentsAI(dt, player), cm = updateCamsAI(dt, player), caughtBy = ag.caughtBy;

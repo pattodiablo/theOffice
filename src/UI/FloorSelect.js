@@ -1,3 +1,4 @@
+import { pokiMeasure } from '../Core/Poki.js';
 import { EDITOR, $ } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
 import { loadLevelNamed, nextLevelName, countLevels, prefetchLevel } from '../Data/LevelIO.js';
@@ -131,6 +132,7 @@ export function initFloorSelect() {
 export const fragmentsText = () => `◆ ${crystalCount()} / ${crystalsNeeded()} reality fragments<span class="scoins">${coins()}${COIN}</span>`;
 
 export async function openFloors() {
+  pokiMeasure('button', 'floors', 'interact');                         // Poki: abrió el menú de pisos
   if (EDITOR || !menuEl.hidden || G.mode === 'exit') return;
   prevMode = G.mode; if (G.mode === 'play') G.mode = 'menu';            // pausa mientras está abierto
   menuEl.querySelector('.fsub').innerHTML = fragmentsText();

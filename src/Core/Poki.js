@@ -56,3 +56,23 @@ export async function pokiReward() {
   inBreak = false; setMuted(false);
   return ok;
 }
+
+// ---------- métricas para Poki (PokiSDK.measure: categoría, qué, acción) ----------
+// Puntos de control del progreso de los jugadores (se ven en el panel de Poki). Lista completa en el README.
+// Reglas de Poki: sin "/" ni "^" en los textos; por cada "start" de un nivel va un "complete" o un "fail", nunca los dos.
+// En `npm run dev` también se escriben en la consola (console.debug) para revisarlos.
+export function pokiMeasure(category, what, action) {
+  const clean = s => String(s).replace(/[/^]/g, '-');
+  const args = [clean(category), clean(what), clean(action)];
+  if (import.meta.env.DEV && !EDITOR) console.debug('[poki measure]', ...args);
+  try { sdk()?.measure?.(...args); } catch (e) {}
+}
+const once = new Set();                                                 // eventos que se mandan una sola vez por partida
+export function pokiMeasureOnce(category, what, action) {
+  const k = category + '|' + what + '|' + action; if (once.has(k)) return; once.add(k); pokiMeasure(category, what, action);
+}
+// intentos de nivel: start → complete o fail. Si empieza otro intento sin terminar el anterior (reintentar tras ser
+// atrapado, elegir otro piso), el anterior cuenta como fail.
+let attempt = null;
+export function pokiLevelStart(n) { if (attempt != null) pokiMeasure('level', attempt, 'fail'); attempt = n; pokiMeasure('level', n, 'start'); }
+export function pokiLevelEnd(n, ok) { if (attempt == null) return; pokiMeasure('level', attempt, ok ? 'complete' : 'fail'); attempt = null; }

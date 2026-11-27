@@ -267,3 +267,17 @@ export const gateSound = () => tone((a, t0) => {
     o.connect(g).connect(a.destination); o.start(t0 + d); o.stop(t0 + d + .32);
   }
 });
+
+// el Observador: servo que baja (o sube) por el cable y garabatos del lápiz en el cuaderno
+export const servoSound = (down = true) => tone((a, t0) => {
+  const o = a.createOscillator(), f = a.createBiquadFilter(), g = a.createGain(); o.type = 'sawtooth'; f.type = 'lowpass'; f.frequency.value = 900;
+  o.frequency.setValueAtTime(down ? 220 : 120, t0); o.frequency.exponentialRampToValueAtTime(down ? 110 : 240, t0 + 1.2);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.05, t0 + .1); g.gain.setValueAtTime(.05, t0 + 1); g.gain.exponentialRampToValueAtTime(.0001, t0 + 1.3);
+  o.connect(f).connect(g).connect(a.destination); o.start(t0); o.stop(t0 + 1.35);
+});
+export const scribbleSound = () => tone((a, t0) => {
+  const n = a.createBufferSource(), b = a.createBuffer(1, a.sampleRate * .09 | 0, a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const f = a.createBiquadFilter(), g = a.createGain(); f.type = 'bandpass'; f.frequency.value = 2600 + Math.random() * 1600; f.Q.value = 1.5; g.gain.value = .05;
+  n.buffer = b; n.connect(f).connect(g).connect(a.destination); n.start(t0);
+});

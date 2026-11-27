@@ -1,4 +1,5 @@
 import { INTRO_MESSAGES } from '../Settings.js';
+import { pokiMeasure } from '../Core/Poki.js';
 
 // Intro de la primera partida: la pantalla se funde a blanco, aparecen unas "Z Z Z" grandes flotando (está soñando),
 // se escribe un mensaje onírico (INTRO_MESSAGES) y el blanco se desvanece sobre el piso 1.
@@ -13,17 +14,18 @@ export function dreamIntro() {
     const msgEl = el.querySelector('.imsg'), msg = INTRO_MESSAGES[Math.random() * INTRO_MESSAGES.length | 0];
     const timers = [], at = (s, fn) => timers.push(setTimeout(fn, s * 1000));
     let ended = false;
-    const end = () => {                                           // desvanecer y empezar
-      if (ended) return; ended = true; timers.forEach(clearTimeout);
+    pokiMeasure('tutorial', 'dream-intro', 'start');
+    const end = (skipped = false) => {                            // desvanecer y empezar
+      if (ended) return; ended = true; pokiMeasure('tutorial', 'dream-intro', skipped === true ? 'skip' : 'complete'); timers.forEach(clearTimeout);
       removeEventListener('keydown', skip); el.removeEventListener('pointerdown', skip);
       el.classList.add('out'); resolve();
       setTimeout(() => el.remove(), T.out * 1000);
     };
-    const skip = e => { if (e.type === 'keydown') e.preventDefault(); end(); };
+    const skip = e => { if (e.type === 'keydown') e.preventDefault(); end(true); };
     addEventListener('keydown', skip); el.addEventListener('pointerdown', skip);
     at(T.zzz, () => el.classList.add('show-z'));
     at(T.msg, () => el.classList.add('show-msg'));
     for (let i = 1; i <= msg.length; i++) at(T.msg + .3 + i * T.char, () => { msgEl.textContent = msg.slice(0, i); });
-    at(T.msg + .3 + msg.length * T.char + T.hold, end);
+    at(T.msg + .3 + msg.length * T.char + T.hold, () => end());
   });
 }
