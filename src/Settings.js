@@ -19,8 +19,11 @@ export const SEE_THROUGH_ALPHA = .25;                      // cuánto se sigue v
 
 // ---- Ambientación verde ----
 export const GREEN_TINT = .22, CODE_RAIN = false;          // tinte verde sobre la imagen · lluvia de código de fondo
-// Colores de la paleta que se vuelven verdes al cargar (los .vox no cambian): pantallas, lámparas y vidrios.
-export const GREEN_LOOK = { '60,80,110': [30, 170, 80], '245,250,255': [205, 255, 220], '150,155,160': [120, 170, 135], '170,205,235': [110, 195, 145], '215,235,250': [185, 255, 210] };
+// Colores de la paleta que cambian al cargar (los .vox no cambian): pantallas, lámparas y vidrios se vuelven verdes,
+// y las baldosas del piso (214,218,222 y 196,201,206) bajan a un tono medio: así las paredes claras, el jugador (blanco),
+// los agentes (negro), los conos y los círculos del piso se leen mejor. Para volver al piso claro, borra las dos últimas.
+export const GREEN_LOOK = { '60,80,110': [30, 170, 80], '245,250,255': [205, 255, 220], '150,155,160': [120, 170, 135], '170,205,235': [110, 195, 145], '215,235,250': [185, 255, 210],
+  '214,218,222': [140, 157, 148], '196,201,206': [124, 141, 132] };
 
 // ---- Agentes ----
 export const PATROL_SPEED = 10.5;
