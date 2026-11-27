@@ -24,7 +24,7 @@ import { initGlitchFloor, animateGlitchFloor } from './Prefabs/GlitchFloor.js';
 import { initGates, animateGates } from './Prefabs/SecurityGate.js';
 import { initCrystal, animateCrystal } from './Prefabs/Crystal.js';
 import { initPortal, animatePortal } from './Prefabs/Portal.js';
-import { initRealityPortals, animateRealityPortals } from './Prefabs/RealityPortal.js';
+import { initRealityPortals, animateRealityPortals, updateFarewell } from './Prefabs/RealityPortal.js';
 import { initFloorSelect, openFloors, goToLevel } from './UI/FloorSelect.js';
 import { hasProgress, nextToPlay, crystalCount, setFloorCount } from './Data/Progress.js';
 import { countLevels, loadLevelNamed } from './Data/LevelIO.js';
@@ -105,7 +105,7 @@ function frame(dt) {
   if (G.mode !== 'play') pokiStop();                       // atrapado, ascensor, menú, final: ya no está jugando
   animatePlayer(); animateBombs(dt);                       // bombas después del jugador: le levantan los brazos al cargarlas
   updateStartDesk(); updateBubble(cam, stage); updateExitDoor(dt); updateCodeRain(dt);
-  updateParticles(dt); animateHideSpots(dt, player);
+  updateParticles(dt); animateHideSpots(dt, player); updateFarewell(dt);   // la despedida del final reemplaza la pose del jugador
   animateAgents(); animateCams(); animateRacks(); animateLasers(); animateTowers(dt); animateSafes(dt); animateMainFrames(dt); animateBees(dt); animateGlitchFloor(dt); animateGates(); animateCrystal(); animatePortal(dt); animateRealityPortals(dt);
   const cEl = document.getElementById('crystals'); cEl.textContent = `◆ ${crystalCount() + (G.gotCrystal && !G.hadCrystal ? 1 : 0)}`; cEl.classList.toggle('got', !!G.gotCrystal);
   updateElevator(real); updateCaught(real); updateJuice(real, cam, stage);
