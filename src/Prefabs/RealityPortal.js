@@ -80,6 +80,10 @@ export function syncRealityPortals() {
 }
 
 export const online = () => depositedCount() >= crystalsNeeded();
+// para las flechas guía: contenedor del portal y cuántos cristales te faltan echar
+export const portalTank = () => portals[0] ? { x: portals[0].tank.x, y: portals[0].tank.y, h: TANK.z1 } : null;
+export const pendingDeposit = () => carried() - depositedCount() - flying.length;
+
 // en el piso del portal, el ascensor queda bloqueado mientras tengas cristales sin echar al contenedor (ExitDoor.js)
 export const crystalsToDrop = () => portals.length && !online() ? Math.max(0, carried() - depositedCount()) : 0;
 // cristales que tienes para echar: los de pisos terminados + el que recogiste en este piso (todavía no terminado)
