@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { EDITOR, $ } from '../Core/Constants.js';
+import { EDITOR, $, Z } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
 import { WAKE_MESSAGES } from '../Settings.js';
 import { markDone, allCollected } from '../Data/Progress.js';
@@ -9,6 +9,7 @@ import { renderer, stage, CAM_OFF } from '../Core/Engine.js';
 import { makeCharacter, box } from '../Prefabs/Character.js';
 import { wearHat } from '../Prefabs/Hats.js';
 import { poseClip } from '../Animations/CharacterPoses.js';
+import { playClip } from '../Animations/Clips.js';
 import { player } from '../Prefabs/Player.js';
 import { ease } from '../Core/MathUtils.js';
 import { winJingle } from '../Core/Audio.js';
@@ -32,6 +33,8 @@ import { haptic } from '../FX/Juice.js';
 //   +0.3 después del mensaje: botón Play
 const T_SWITCH = .9, T_GO = 1.2, T_JINGLE = 1.4, T_MSG = 1.8, CHAR_TIME = .04;
 const RIDE_TIME = 2.6;                 // segundos que tarda en bajar el piso
+const DANCE_CHANCE = .5, T_DANCE = 1.2 + 2.6 + .35;   // probabilidad de que baile al llegar (si no, se queda atento) y cuándo empieza
+let dance = false;
 const FLOOR_H = 36, SEGS = 5;          // alto de cada piso del hueco · pisos que se reciclan
 const SHAFT = 13;                      // medio ancho del hueco (las paredes están en x = -SHAFT y z = -SHAFT)
 const Z0 = 3;                          // el personaje se para en y = 3 (como en el nivel)
@@ -149,6 +152,7 @@ export function startExit() {
   let i; do { i = Math.random() * WAKE_MESSAGES.length | 0; } while (WAKE_MESSAGES.length > 1 && i === lastMsg);
   lastMsg = i; msg = WAKE_MESSAGES[i]; shownChars = -1; msgEl.textContent = ''; done = false;
   earned = EDITOR ? [] : markDone(G.levelName, !!G.gotCrystal, G.time, !G.alerts);   // piso terminado (y su cristal, si lo llevas): monedas ganadas
+  dance = Math.random() < DANCE_CHANCE;
   G.mode = 'exit'; ex = 0; shown = false; loading = false; travel = 0; speed = 0; floorShown = null;
   fromFloor = Math.max(1, levelCount - levelNumber(G.levelName) + 1);   // nivel 1 de 20 → piso 20 (baja al 19)
   segs.forEach((s, k) => { s.g.position.y = (k - 2) * FLOOR_H; const n = fromFloor + k - 2; if (s.num !== n) { s.num = n; s.L.draw(floorName(n)); } });
@@ -200,7 +204,10 @@ export function updateElevator(dt) {
     const f = travel > FLOOR_H / 2 ? fromFloor - 1 : fromFloor;
     if (f !== floorShown) { floorShown = f; floorTex.draw(floorName(f)); }
     cabin.position.y = Math.sin(ex * 11) * .1 * Math.min(1, speed / 20);    // leve vibración mientras se mueve
-    poseClip(rider, 0, 0, -Math.PI / 4, 'elevator_wait', ex - T_SWITCH);   // atento: mira a los lados y al indicador (clip elevator_wait)
+    if (dance && ex > T_DANCE) {                                          // a veces, al llegar, se pone a bailar (clip gangnam)
+      rider.root.position.set(0, Z, 0); rider.root.rotation.y = -Math.PI / 4;
+      playClip(rider, 'gangnam', ex - T_DANCE, Math.min(1, ex - T_DANCE < .4 ? dt * 10 : 1));
+    } else poseClip(rider, 0, 0, -Math.PI / 4, 'elevator_wait', ex - T_SWITCH);   // atento: mira a los lados y al indicador (clip elevator_wait)
     if (ex >= T_JINGLE && ex - dt < T_JINGLE) winJingle();
 
     // 4) mensaje letra por letra; luego estrellas y Play
