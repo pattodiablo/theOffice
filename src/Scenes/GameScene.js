@@ -11,7 +11,7 @@ import { resetTowers, updateTowers } from '../Prefabs/SensorTower.js';
 import { resetSafes, updateSafes } from '../Prefabs/Safe.js';
 import { resetBombs, updateBombs } from '../Prefabs/Bomb.js';
 import { updateRealityPortals, syncRealityPortals } from '../Prefabs/RealityPortal.js';
-import { resetProgress } from '../Data/Progress.js';
+import { resetProgress, startEndingTest, stopEndingTest } from '../Data/Progress.js';
 import { resetMainFrames, updateMainFrames } from '../Prefabs/MainFrame.js';
 import { resetBees, updateBees } from '../Prefabs/Bee.js';
 import { resetGlitchFloor, updateGlitchFloor } from '../Prefabs/GlitchFloor.js';
@@ -34,7 +34,7 @@ import { startCaught, resetCaught } from './CaughtScene.js';
 
 export function setMode(m) {
   G.mode = m; resize(); G.snapCam = true; document.body.classList.toggle('play', m !== 'edit'); hideScreen(); resetExit(); resetCaught(); clearBullets();
-  if (EDITOR) onModeChange(m);
+  if (EDITOR) { onModeChange(m); if (m === 'edit') { stopEndingTest(); syncRealityPortals(); } const eb = $('#endTestBtn'); if (eb) eb.hidden = !hasRealityPortal(); }
   resetAgents(); resetCams(); resetRacks(); resetLasers(); resetTowers(); resetSafes(); resetBombs(); resetMainFrames(); resetBees(); resetGlitchFloor(); resetGates(); resetCrystal(); Object.assign(player, { x: G.seat.x, y: G.seat.y, ang: Math.PI / 2, vx: 0, vy: 0 });
   if (G.entOk && m === 'play') { const [x, y] = G.ENT.point(5.5, .5); Object.assign(player, { x, y, ang: G.ENT.ang }); } // con entrada: espera detrás de las puertas
   resetIntro(m === 'play');
@@ -42,6 +42,8 @@ export function setMode(m) {
   setAlarm(0); setGlitchFX(false); setMeter(0); resetJuice();
 }
 
+
+const hasRealityPortal = () => (G.level?.props || []).some(p => p.t.startsWith('realityportal'));
 
 export function showTitle() {
   setMode('play');
@@ -95,6 +97,8 @@ export function initGameScene() {
   });
   $('#stage').addEventListener('pointerdown', () => { if (G.mode === 'play' && G.asm >= 0) skipAssembly(); else if (G.mode === 'play' && G.intro > .3) finishIntro(); }); // un toque también la salta
   $('#testBtn')?.addEventListener('click', () => setMode('play'));
+  // editor, en el nivel con el portal de realidad (piso1): jugar con todos los cristales para probar el final
+  $('#endTestBtn')?.addEventListener('click', () => { startEndingTest(); syncRealityPortals(); setMode('play'); });
   $('#backBtn')?.addEventListener('click', () => setMode('edit'));
   // solo en el editor (probando): borrar el progreso guardado y reiniciar el nivel. Pide un segundo clic para confirmar.
   const rs = $('#resetSave'); let rsT = 0;
