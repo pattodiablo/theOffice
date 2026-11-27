@@ -16,7 +16,7 @@ import { setAlarm, setGlitchFX } from '../FX/ScreenFX.js';
 import { loadLevelNamed, nextLevelName, levelNumber, countLevels, prefetchLevel } from '../Data/LevelIO.js';
 import { rebuild } from './Level.js';
 import { setMode } from './GameScene.js';
-import { pokiBreak } from '../Core/Poki.js';
+import { pokiBreak, pokiLevelEnd, pokiMeasure } from '../Core/Poki.js';
 import { haptic } from '../FX/Juice.js';
 
 // Escena de salida: el jugador entra por la puerta, la oficina se funde a negro y aparece en un ascensor
@@ -149,6 +149,7 @@ export function startExit() {
   let i; do { i = Math.random() * WAKE_MESSAGES.length | 0; } while (WAKE_MESSAGES.length > 1 && i === lastMsg);
   lastMsg = i; msg = WAKE_MESSAGES[i]; shownChars = -1; msgEl.textContent = ''; done = false;
   earned = EDITOR ? [] : markDone(G.levelName, !!G.gotCrystal, G.time, !G.alerts);   // piso terminado (y su cristal, si lo llevas): monedas ganadas
+  if (!EDITOR) { pokiLevelEnd(levelNumber(G.levelName), true); if (!G.alerts) pokiMeasure('stealth', levelNumber(G.levelName), 'no-alerts'); }   // Poki: piso terminado (y si fue sin alertas)
   G.mode = 'exit'; ex = 0; shown = false; loading = false; travel = 0; speed = 0; floorShown = null;
   fromFloor = Math.max(1, levelCount - levelNumber(G.levelName) + 1);   // nivel 1 de 20 → piso 20 (baja al 19)
   segs.forEach((s, k) => { s.g.position.y = (k - 2) * FLOOR_H; const n = fromFloor + k - 2; if (s.num !== n) { s.num = n; s.L.draw(floorName(n)); } });

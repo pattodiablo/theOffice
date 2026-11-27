@@ -202,6 +202,27 @@ export const SAFE = {
   popDist: 7,                 // dónde cae el cristal: vóxeles delante de la puerta
 };                     // qué tan cerca hay que pasar para recogerlo
 export const PORTAL = { need: 0, enterR: 5, depositR: 12 };    // cristales para abrir el portal (0 = uno por piso: tantos como pisos haya) · radio para entrar · qué tan cerca del contenedor para echar los cristales
+// El Observador: la conciencia del sueño (la anti-realidad). A veces baja del techo colgado de un cable, te mira con su lente
+// y anota cosas en su cuaderno, como estudiándote. No te atrapa (por ahora): es la presencia que vigila el experimento.
+//   chance   probabilidad de que aparezca en cada intento de un piso (0 = nunca, 1 = siempre)
+//   delay    segundos de juego antes de bajar (al azar entre los dos)
+//   stay     segundos que se queda anotando · descend / ascend: segundos que tarda en bajar / subir
+//   hover    altura a la que flota (vóxeles sobre el piso) · dist: qué tan lejos de ti se pone (entre los dos)
+export const OBSERVER = { chance: .5, delay: [9, 22], stay: 7, descend: 1.8, ascend: 1.3, hover: 27, dist: [15, 24], subject: '0417' };
+// lo que anota. Elige según lo que estés haciendo; {n} = número. Escritas en inglés como el resto del juego.
+export const OBSERVER_NOTES = {
+  any: ['Subject still believes the office is real.', 'Heart rate elevated. Fascinating.', 'Subject walks like it has somewhere to be.',
+        'Reminder: add more desks.', 'Day 9,412 of the experiment. Nothing to report.', 'Subject has not noticed the ceiling. Good.',
+        'The sunglasses are a nice touch. Useless, but nice.', 'Subject keeps looking for an exit. Adorable.'],
+  hidden: ['Subject is pretending to be furniture. Convincing.', 'Hiding. As predicted.', 'Subject has become one with the office plant.'],
+  seen: ['Subject was spotted {n} time(s). Sloppy.', 'The agents saw you. I saw them see you.', 'Alarm count: {n}. Noted. Underlined.'],
+  retry: ['Attempt #{n}. Subject does not learn.', 'Attempt #{n}. I admire the persistence. Almost.', 'We have done this {n} times now.'],
+  glitch: ['Subject bends time. Must patch that.', 'Unauthorized time freeze detected. Interesting.'],
+  crystal: ['Subject is carrying a fragment of reality. Concerning.', 'It found a crystal. It should not have found a crystal.'],
+  bomb: ['Subject is holding an explosive. Above its head. Bold.'],
+  slow: ['Subject is taking its time. I have eternity.', '{n} seconds and still on this floor.'],
+};
+
 // intro de la primera partida: pantalla blanca, "Z Z Z" y uno de estos mensajes (al azar) antes del piso 1
 export const INTRO_MESSAGES = [
   'Is this reality... or just another dream?',

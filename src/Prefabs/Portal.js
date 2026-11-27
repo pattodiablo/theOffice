@@ -5,6 +5,7 @@ import { PORTAL, ENDING_MESSAGES } from '../Settings.js';
 import { cam, stage } from '../Core/Engine.js';
 import { crystalCount, crystalsNeeded } from '../Data/Progress.js';
 import { portalSound } from '../Core/Audio.js';
+import { pokiMeasure } from '../Core/Poki.js';
 
 // Portal (level.portal = { x, y }, editor › Nivel › Portal): la salida de la Matrix, pensado para el nivel 21.
 // Se abre solo si juntaste todos los cristales (crystalsNeeded) (en el editor siempre está abierto, para probarlo).
@@ -40,6 +41,7 @@ export function updatePortal(dt, p) {
 
 // final del juego: pantalla blanca con el mensaje (también lo usa el portal de realidad, RealityPortal.js)
 export function startEnding() {
+  pokiMeasure('game', 'ending', 'complete');                               // Poki: terminó el juego
   G.mode = 'ending'; et = 0; msg = ENDING_MESSAGES[Math.random() * ENDING_MESSAGES.length | 0]; portalSound();
   endEl.classList.add('show'); endEl.querySelector('.emsg').textContent = '';
 }

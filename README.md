@@ -97,6 +97,26 @@ Poki for Developers / Poki Inspector (https://inspector.poki.dev/). La integraci
 cuando te atrapan, sales por el ascensor o abres el menú, y `commercialBreak` antes de Retry, del siguiente piso o de elegir piso.
 Las fuentes van incluidas (paquetes @fontsource) porque Poki bloquea las peticiones externas.
 
+**Métricas (PokiSDK.measure)** — puntos de control para ver el progreso de los jugadores en el panel de Poki.
+En `npm run dev` cada evento también sale en la consola como `[poki measure]`.
+
+| Categoría | Qué | Acción | Cuándo |
+|---|---|---|---|
+| `tutorial` | `dream-intro` | `start` / `complete` / `skip` | intro "soñando" de la primera partida |
+| `level` | número de piso | `start` | empieza un intento (también al reintentar) |
+| `level` | número de piso | `complete` | sale por el ascensor |
+| `level` | número de piso | `fail` | lo atraparon y reintenta, o cambia de piso sin terminar |
+| `caught` | número de piso | `agent` / `hazard` | lo atrapó un agente, o un láser, torre, jefe o abeja |
+| `stealth` | número de piso | `no-alerts` | terminó el piso sin que nadie lo viera |
+| `crystal` | número de piso | `collected` | recogió el cristal del piso |
+| `boss` | número de piso | `defeated` | derrotó al Main Frame |
+| `rewarded` | `revive` | `visible` / `interact` / `rewarded` | botón de revivir: se ve · lo toca · vio el video y revivió |
+| `button` | `floors` | `interact` | abrió el menú de pisos |
+| `shop` | id del sombrero | `purchased` | compró un sombrero |
+| `portal` | `online` | `reached` | echó todos los cristales (una vez por partida) |
+| `game` | `ending` | `complete` | entró al portal: final del juego |
+
+
 
 ```bash
 npm run build

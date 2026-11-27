@@ -1,3 +1,4 @@
+import { pokiMeasure } from '../Core/Poki.js';
 import { HATS } from '../Settings.js';
 import { coins, ownsHat, equippedHat, equipHat, buyHat } from '../Data/Progress.js';
 import { hatPreview, hatReady, refreshHats } from '../Prefabs/Hats.js';
@@ -37,7 +38,7 @@ function say(t, bad) { msg.textContent = t; msg.classList.toggle('bad', !!bad); 
 function pick(id, card) {
   const h = HATS.list.find(h => h.id === id);
   if (ownsHat(id)) { const on = equippedHat() === id; equipHat(on ? null : id); tickSound(); say(on ? 'HAT OFF' : h.name.toUpperCase() + ' ON'); }
-  else if (buyHat(id)) { crystalSound(); haptic(30); say('BOUGHT ' + h.name.toUpperCase() + '!'); card.classList.add('bought'); }
+  else if (buyHat(id)) { pokiMeasure('shop', id, 'purchased'); crystalSound(); haptic(30); say('BOUGHT ' + h.name.toUpperCase() + '!'); card.classList.add('bought'); }
   else { beeBonkSound(); haptic([15, 40, 15]); card.classList.remove('nope'); void card.offsetWidth; card.classList.add('nope'); say(`NEED ${h.price - coins()} MORE`, true); }
   refreshHats(); render(); onChange?.();
 }

@@ -1,3 +1,5 @@
+import { pokiMeasure } from '../Core/Poki.js';
+import { levelNumber } from '../Data/LevelIO.js';
 import * as THREE from 'three';
 import { Z, W, D } from '../Core/Constants.js';
 import { G } from '../Core/Game.js';
@@ -80,7 +82,7 @@ export function hitBoss(b) {                                         // le explo
   if (b.dead) return;
   b.hp--; hitstop(.1); shake(1.3); kick(.14); haptic(b.hp <= 0 ? [80, 40, 80, 40, 200] : [60, 30, 60]); puff(b.x, b.y); puff(b.x + 3, b.y - 2);
   if (b.hp <= 0) {                                                   // ¡derrotado!
-    b.dead = true; b.state = 'down'; b.t = 0; G.bossDown = true;
+    b.dead = true; b.state = 'down'; b.t = 0; G.bossDown = true; pokiMeasure('boss', levelNumber(G.levelName), 'defeated');   // Poki
     flash('255,255,255', .6); popText(b.x, b.y, 'MAIN FRAME DOWN!', 'cyan');
     const c = G.bossCrystal;
     if (c && c.inX === b.x && c.inY === b.y) {                         // suelta el cristal hacia donde está el jugador

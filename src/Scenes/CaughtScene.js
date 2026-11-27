@@ -6,7 +6,8 @@ import { caughtSound } from '../Core/Audio.js';
 import { shake, kick, hitstop, slowmo, flash, popText, haptic } from '../FX/Juice.js';
 import { setAlarm, setGlitchFX } from '../FX/ScreenFX.js';
 import { player } from '../Prefabs/Player.js';
-import { pokiBreak, pokiBusy, pokiReward, pokiCanReward } from '../Core/Poki.js';
+import { pokiBreak, pokiBusy, pokiReward, pokiCanReward, pokiMeasure } from '../Core/Poki.js';
+import { levelNumber } from '../Data/LevelIO.js';
 import { agents, stunAgent } from '../Prefabs/Agent.js';
 import { beeTargets, stunBee } from '../Prefabs/Bee.js';
 import { giveBomb } from '../Prefabs/Bomb.js';
@@ -37,10 +38,10 @@ export function initCaught() {
   $('#retryBtn').addEventListener('click', retry);
   $('#reviveBtn').addEventListener('click', async () => {
     if (pokiBusy() || G.mode !== 'caught' || G.revived) return;
-    const btn = $('#reviveBtn'); btn.disabled = true;
+    const btn = $('#reviveBtn'); btn.disabled = true; pokiMeasure('rewarded', 'revive', 'interact');
     const ok = await pokiReward();
     btn.disabled = false;
-    if (ok && G.mode === 'caught') revive(); else btn.hidden = true;     // sin video: queda solo Retry
+    if (ok && G.mode === 'caught') { revive(); pokiMeasure('rewarded', 'revive', 'rewarded'); } else btn.hidden = true;     // sin video: queda solo Retry
   });
   $('#dreamEdit')?.addEventListener('click', () => setMode('edit'));
   addEventListener('keydown', e => { if (G.mode === 'caught' && retryShown && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); (document.activeElement?.id === 'reviveBtn' ? $('#reviveBtn') : $('#retryBtn')).click(); } });
@@ -62,6 +63,7 @@ export function startCaught(agent) {
   let i; do { i = Math.random() * DREAM_MESSAGES.length | 0; } while (DREAM_MESSAGES.length > 1 && i === lastMsg); // no repetir el anterior
   lastMsg = i; msg = DREAM_MESSAGES[i];
   const rb = $('#reviveBtn'); rb.hidden = G.revived || !pokiCanReward() || EDITOR; rb.disabled = false;
+  if (!EDITOR) pokiMeasure('caught', levelNumber(G.levelName), agent ? 'agent' : 'hazard');   // Poki: dónde y por qué pierden
   G.shake = 3.5;                                   // Engine sacude la cámara y lo va apagando
   kick(.14); flash('255,40,40', .45); haptic([90, 50, 160]);   // te atraparon
   document.body.classList.add('caught'); setGlitchFX(false); caughtSound();
@@ -85,6 +87,6 @@ export function updateCaught(dt) {
     el.classList.add('show-text');
     const n = Math.min(msg.length, Math.floor((ct - T_TEXT) / CHAR_TIME));
     if (n !== shownChars) { shownChars = n; textEl.textContent = msg.slice(0, n); }
-    if (n >= msg.length && ct >= T_TEXT + msg.length * CHAR_TIME + .4 && !retryShown) { retryShown = true; el.classList.add('show-btn'); ($('#reviveBtn').hidden ? $('#retryBtn') : $('#reviveBtn')).focus(); }
+    if (n >= msg.length && ct >= T_TEXT + msg.length * CHAR_TIME + .4 && !retryShown) { retryShown = true; el.classList.add('show-btn'); if (!$('#reviveBtn').hidden) pokiMeasure('rewarded', 'revive', 'visible'); ($('#reviveBtn').hidden ? $('#retryBtn') : $('#reviveBtn')).focus(); }
   }
 }
