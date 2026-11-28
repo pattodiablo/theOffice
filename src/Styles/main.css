@@ -284,7 +284,7 @@ body.exiting #rpMsg,body.caught #rpMsg{display:none}
 #reward .rcoins{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:8px}
 #reward .rcoins em{font:400 clamp(16px,2.4vw,22px)/1 Anton,Bangers,"Chakra Petch",sans-serif;font-style:normal;color:#3be07c;letter-spacing:.04em;text-shadow:0 2px 0 #06140c;opacity:0;animation:coinIn .45s ease-out forwards}
 @keyframes coinIn{from{opacity:0;transform:translateY(10px) scale(.8)}60%{transform:scale(1.12)}to{opacity:1;transform:none}}
-.dial .dshop{position:absolute;left:calc(var(--x) + var(--col) + 10px);right:10px;top:calc(50% + var(--row)*.5 + 14px);display:flex;align-items:center;gap:6px;pointer-events:auto}
+.dial .dshop{position:absolute;left:calc(var(--x) + var(--col) + 10px);right:10px;top:calc(50% + var(--row)*.5 + var(--row)*.34 + 26px);display:flex;align-items:center;gap:6px;pointer-events:auto}
 .dial .dshop[hidden]{display:none}
 .dial .srow{flex:1;display:flex;justify-content:center;gap:clamp(10px,2.2vw,26px)}
 .dial .scard-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;width:clamp(110px,16vw,190px)}
@@ -397,3 +397,5 @@ body.caught #tut,body.exiting #tut,body:not(.play) #tut{display:none}
 #dream .dbtns,#reward .rbtns{flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 24px)}
 @media(max-width:430px){.playbtn{font-size:22px;padding:0 24px;min-height:52px}#reward .rbtns,#dream .dbtns{gap:14px 18px}}
 @media(max-width:350px){.playbtn{font-size:20px;padding:0 18px;min-height:50px}}
+/* pantallas altas (celular vertical): la tienda baja un poco más, lejos de la franja y del botón de jugar */
+@media(max-aspect-ratio:3/4){.dial .dshop{top:calc(50% + var(--row)*.5 + var(--row)*.34 + 8vh)}}
