@@ -11,7 +11,7 @@ import { haptic } from '../FX/Juice.js';
 
 export const COIN = `<svg class="coin" viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="18.5" rx="14" ry="11" fill="#1f6b36"/><ellipse cx="16" cy="15" rx="14" ry="11" fill="#3be07c"/><ellipse cx="16" cy="15" rx="10.5" ry="8" fill="#2aa85a"/><path d="M20.2 11.4a6 5 0 1 0 0 7.2" fill="none" stroke="#c9ffd9" stroke-width="2.6" stroke-linecap="round"/></svg>`;
 
-let el, row, msg, title, start = 0, onChange = null, msgT = 0;
+let el, row, msg, start = 0, onChange = null, msgT = 0;
 const list = () => HATS.list.filter(h => hatReady(h.id));
 const perPage = () => {
   const w = el?.clientWidth || 600, vw = innerWidth, small = vw <= 600;
@@ -22,8 +22,8 @@ const perPage = () => {
 export function makeShop(changed) {
   onChange = changed;
   el = document.createElement('div'); el.className = 'dshop';
-  el.innerHTML = `<button class="sarrow sprev" aria-label="Previous hats">◀</button><div class="srow"></div><button class="sarrow snext" aria-label="More hats">▶</button><p class="smsg"></p><p class="stitle"></p>`;
-  row = el.querySelector('.srow'); msg = el.querySelector('.smsg'); title = el.querySelector('.stitle');
+  el.innerHTML = `<button class="sarrow sprev" aria-label="Previous hats">◀</button><div class="srow"></div><button class="sarrow snext" aria-label="More hats">▶</button><p class="smsg"></p>`;
+  row = el.querySelector('.srow'); msg = el.querySelector('.smsg');
   el.querySelector('.sprev').addEventListener('click', () => page(-1));
   el.querySelector('.snext').addEventListener('click', () => page(1));
   row.addEventListener('click', e => { const c = e.target.closest('[data-hat]'); if (c) pick(c.dataset.hat, c); });
@@ -63,5 +63,4 @@ export function render() {
   el.querySelector('.sprev').classList.toggle('hint', L.slice(0, start).some(can));
   el.querySelector('.snext').classList.toggle('hint', L.slice(start + n).some(can));
   const any = L.some(can); el.classList.toggle('canbuy', any);
-  title.innerHTML = any ? `NEW HAT AVAILABLE! <span>${c}${COIN}</span>` : `HAT SHOP <span>${c}${COIN}</span>`;
 }

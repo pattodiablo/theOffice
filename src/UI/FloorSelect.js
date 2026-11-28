@@ -17,6 +17,7 @@ import { makeShop, resetShop, COIN } from './HatShop.js';
 //   · ◆ celeste = tienes su fragmento de realidad · ◇ blanco = te falta
 // Se usa en dos lugares: en el ascensor del final (sobre la animación) y en el menú ☰ del HUD (con el juego en pausa).
 
+let coinBadge = null;
 let dial, list, band, playB, items = [], floors = [], pos = 0, target = 0, active = false, onPlay = null, raf = 0, ROW = 64, lastTick = 0;
 let drag = null;
 let menuEl, prevMode = null;
@@ -28,7 +29,8 @@ function buildDial() {
   dial.innerHTML = `<div class="dband"><button class="dplay">PLAY FLOOR ▶</button></div>
     <div class="dlist"></div>
     <button class="darrow dup" aria-label="Previous floor">▲</button><button class="darrow ddown" aria-label="Next floor">▼</button>`;
-  dial.append(makeShop(() => document.querySelectorAll('.scoins').forEach(e => { e.innerHTML = coins() + COIN; e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); })));
+  dial.append(makeShop(() => { coinBadge.innerHTML = coins() + COIN; coinBadge.classList.remove('bump'); void coinBadge.offsetWidth; coinBadge.classList.add('bump'); }));
+  coinBadge = document.createElement('div'); coinBadge.id = 'coinBadge'; coinBadge.hidden = true; document.body.append(coinBadge);   // monedas: arriba a la izquierda mientras se ve el dial
   list = dial.querySelector('.dlist'); band = dial.querySelector('.dband'); playB = dial.querySelector('.dplay');
   dial.querySelector('.dup').addEventListener('click', () => step(-1));
   dial.querySelector('.ddown').addEventListener('click', () => step(1));
@@ -114,14 +116,15 @@ export async function showDial(host, sel, cb) {
   target = clampI(i < 0 ? 0 : i); if (!floors[target].open) target = clampI(floors.filter(f => f.open).length - 1);
   pos = target; lastTick = target;
   onPlay = cb; host.append(dial); measure(); updateBand(); resetShop();
+  coinBadge.innerHTML = coins() + COIN; coinBadge.hidden = false; document.body.classList.add('dialon');
   active = true; cancelAnimationFrame(raf); frame();
 }
-export function hideDial() { active = false; onPlay = null; cancelAnimationFrame(raf); dial?.remove(); }
+export function hideDial() { active = false; onPlay = null; cancelAnimationFrame(raf); dial?.remove(); if (coinBadge) coinBadge.hidden = true; document.body.classList.remove('dialon'); }
 
 // ---------- menú ☰ (pausa) ----------
 export function initFloorSelect() {
   menuEl = document.createElement('div'); menuEl.id = 'floors'; menuEl.hidden = true;
-  menuEl.innerHTML = `<div class="ftop"><h2 class="dtitle">ELEVATOR</h2><p class="fsub"></p></div><div class="dslot"></div>
+  menuEl.innerHTML = `<div class="ftop"><p class="fsub"></p></div><div class="dslot"></div>
     <button id="floorsClose" aria-label="Close">✕</button>`;
   document.body.append(menuEl);
   $('#floorsClose').addEventListener('click', closeFloors);
@@ -129,7 +132,7 @@ export function initFloorSelect() {
 }
 
 // subtítulo del ascensor (va con innerHTML): fragmentos y monedas
-export const fragmentsText = () => `◆ ${crystalCount()} / ${crystalsNeeded()} reality fragments<span class="scoins">${coins()}${COIN}</span>`;
+export const fragmentsText = () => `◆ ${crystalCount()} / ${crystalsNeeded()} reality fragments`;
 
 export async function openFloors() {
   pokiMeasure('button', 'floors', 'interact');                         // Poki: abrió el menú de pisos
