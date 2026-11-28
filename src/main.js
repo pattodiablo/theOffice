@@ -56,6 +56,7 @@ import { pokiInit, pokiLoaded, pokiStop } from './Core/Poki.js';
 // fuentes incluidas en el build (Poki bloquea las peticiones externas, como Google Fonts)
 // fuentes: Google Fonts en index.html (Pages)
 // fuentes: Google Fonts en index.html (Pages)
+import { updateHUDInfo } from './UI/HUD.js';
 // fuentes: Google Fonts en index.html (Pages)
 
 // Punto de entrada: carga los datos, crea los objetos de la escena y arranca el bucle.
@@ -115,7 +116,7 @@ function frame(dt) {
   updateStartDesk(); updateBubble(cam, stage); updateExitDoor(dt); updateCodeRain(dt);
   updateParticles(dt); animateHideSpots(dt, player); updateFarewell(dt);   // la despedida del final reemplaza la pose del jugador
   animateAgents(); animateCams(); animateRacks(); animateLasers(); animateTowers(dt); animateSafes(dt); animateMainFrames(dt); animateBees(dt); animateSnakes(dt); animateGlitchFloor(dt); animateGates(); animateObserver(dt, player); animateCrystal(); animatePortal(dt); animateRealityPortals(dt); animateGuideArrows(dt);
-  const cEl = document.getElementById('crystals'); cEl.textContent = `◆ ${crystalCount() + (G.gotCrystal && !G.hadCrystal ? 1 : 0)}`; cEl.classList.toggle('got', !!G.gotCrystal);
+  updateHUDInfo();
   updateElevator(real); updateCaught(real); updateJuice(real, cam, stage);
   updateCamera(real, player); updateSeeThrough(dt, player);
   if (elevatorShown()) renderElevator(); else { preRender(); render(); postRender(); }

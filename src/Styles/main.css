@@ -243,7 +243,9 @@ body.exiting #rpMsg,body.caught #rpMsg{display:none}
 /* chips del HUD (tiempo, cristales) y botón menú */
 #hud .chip,#hud button{color:var(--hink);font:400 clamp(22px,3.4vw,32px)/1 Anton,Bangers,"Chakra Petch",sans-serif;letter-spacing:.02em;padding:10px 26px;min-height:52px;display:flex;align-items:center;justify-content:center;gap:.45em}
 #hud .row{gap:14px;padding-left:8px}
-#info{width:3.4em;padding-left:10px!important;padding-right:10px!important}   /* segundos enteros, hasta 999 sin saltar */
+#info{width:auto;padding-left:20px!important;padding-right:20px!important;gap:.25em} #info small{font-size:.55em;opacity:.75;letter-spacing:.08em}
+#crystals{width:2.6em;font-size:clamp(24px,3.6vw,34px)!important;color:rgba(191,232,255,.4)!important}
+#crystals.got{color:#9feaff!important;text-shadow:0 0 12px #4fd2ff}
 #crystals{color:var(--hink)} #crystals.got::before{border-color:#4fd2ff;box-shadow:0 0 14px rgba(79,210,255,.6)} #crystals.got{color:#fff}
 #floorsBtn{font-size:0!important;width:76px;padding:0!important}
 #floorsBtn::after{content:"";width:30px;height:22px;background:linear-gradient(var(--hink) 0 4px,transparent 4px 9px,var(--hink) 9px 13px,transparent 13px 18px,var(--hink) 18px 22px)}
@@ -407,3 +409,8 @@ body.caught #tut,body.exiting #tut,body:not(.play) #tut{display:none}
 #coinBadge.bump{animation:coinBump .35s ease-out}
 body.exiting:not(.dialon) #coinBadge{display:none}
 @media(max-width:600px){body.dialon #floors .ftop{padding-top:50px}body.dialon #reward.withdial .top{padding-top:46px}}
+/* tiempo del nivel: solo el número, abajo a la izquierda */
+#timer{position:fixed;left:max(18px,env(safe-area-inset-left));bottom:max(14px,env(safe-area-inset-bottom));z-index:2;pointer-events:none;
+  font:400 clamp(26px,4vw,38px)/1 Anton,Bangers,"Chakra Petch",sans-serif;letter-spacing:.03em;color:var(--hink);font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 0 #06140c,0 0 10px rgba(6,20,12,.9);opacity:.85}
+body.exiting #timer,body.caught #timer,body:not(.play) #timer{display:none!important}
